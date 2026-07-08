@@ -17,7 +17,7 @@ function paymentLabel(p: Sale["payment"]) {
 
 export function receiptSummaryText(sale: Sale, cfg: BusinessConfig) {
   const lines: string[] = [];
-  lines.push(`*RECIBO — ${cfg.name || "MM IRAU'CELL"}*`);
+  lines.push(`*RECIBO — ${cfg.name || "STOKMASTER"}*`);
   if (cfg.cnpj) lines.push(`CNPJ: ${cfg.cnpj}`);
   lines.push(`Data: ${fmtDateTime(sale.date)}`);
   lines.push(`Nº: ${sale.id.toUpperCase()}`);
@@ -59,7 +59,7 @@ export function receiptPdfBlob(sale: Sale, cfg: BusinessConfig): Blob {
   const cx = 40;
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
-  doc.text(cfg.name || "MM IRAU'CELL", cx, y, { align: "center" });
+  doc.text(cfg.name || "STOKMASTER", cx, y, { align: "center" });
   y += 5;
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8);

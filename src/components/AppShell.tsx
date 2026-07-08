@@ -47,14 +47,14 @@ export function AppShell({ children }: { children: ReactNode }) {
               className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-[color:var(--gold)]/40 font-black tracking-tight"
               style={{ color: "var(--gold)" }}
             >
-              MM
+              SM
             </div>
             <div className="min-w-0">
               <div
                 className="truncate text-sm font-black leading-none sm:text-base"
                 style={{ color: "var(--gold)" }}
               >
-                {config.name || "MM IRAU'CELL"}
+                {config.name || "STOKMASTER"}
               </div>
               <div className="mt-0.5 truncate text-[10px] uppercase tracking-widest text-muted-foreground">
                 Controle de estoque

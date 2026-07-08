@@ -297,7 +297,7 @@ function ReceiptModal({ sale, onClose, phone }: { sale: Sale; onClose: () => voi
 
         <div id="receipt-render" className="rounded-xl bg-white p-4 text-black">
           <div className="text-center">
-            <div className="text-base font-black">{config.name || "MM IRAU'CELL"}</div>
+            <div className="text-base font-black">{config.name || "STOKMASTER"}</div>
             {config.cnpj && <div className="text-xs">CNPJ: {config.cnpj}</div>}
             {config.address && <div className="text-xs">{config.address}</div>}
             {config.phone && <div className="text-xs">{config.phone}</div>}

@@ -139,7 +139,7 @@ export const usePurchases = () => useStore<Purchase[]>("purchases", []);
 export const useCustomers = () => useStore<Customer[]>("customers", []);
 
 export const defaultConfig: BusinessConfig = {
-  name: "MM IRAU'CELL",
+  name: "STOKMASTER",
   cnpj: "",
   phone: "",
   address: "",
@@ -196,7 +196,7 @@ export function exportBackup() {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `mm-iraucell-backup-${new Date().toISOString().slice(0, 10)}.json`;
+  a.download = `stokmaster-backup-${new Date().toISOString().slice(0, 10)}.json`;
   a.click();
   URL.revokeObjectURL(url);
 }
