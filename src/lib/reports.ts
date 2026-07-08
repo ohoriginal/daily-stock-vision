@@ -25,7 +25,7 @@ function download(blob: Blob, filename: string) {
 function pdfHeader(doc: jsPDF, cfg: BusinessConfig, title: string, p: Period) {
   doc.setFont("helvetica", "bold");
   doc.setFontSize(14);
-  doc.text(cfg.name || "MM IRAU'CELL", 14, 16);
+  doc.text(cfg.name || "STOKMASTER", 14, 16);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
   let y = 22;

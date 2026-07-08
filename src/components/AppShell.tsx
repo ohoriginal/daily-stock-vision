@@ -54,7 +54,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 className="truncate text-sm font-black leading-none sm:text-base"
                 style={{ color: "var(--gold)" }}
               >
-                {config.name || "MM IRAU'CELL"}
+                {config.name || "STOKMASTER"}
               </div>
               <div className="mt-0.5 truncate text-[10px] uppercase tracking-widest text-muted-foreground">
                 Controle de estoque

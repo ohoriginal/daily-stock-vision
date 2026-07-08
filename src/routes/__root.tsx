@@ -79,14 +79,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
       { name: "theme-color", content: "#141210" },
-      { title: "MM IRAU'CELL — Controle de estoque" },
+      { title: "STOKMASTER — Controle de estoque" },
       {
         name: "description",
         content:
           "Sistema completo de controle de estoque, vendas, compras e relatórios para pequenos negócios. Funciona no celular e computador.",
       },
-      { name: "author", content: "MM IRAU'CELL" },
-      { property: "og:title", content: "MM IRAU'CELL — Controle de estoque" },
+      { name: "author", content: "STOKMASTER" },
+      { property: "og:title", content: "STOKMASTER — Controle de estoque" },
       {
         property: "og:description",
         content:
