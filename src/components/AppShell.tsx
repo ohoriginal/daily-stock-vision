@@ -1,0 +1,155 @@
+import { Link, useRouterState } from "@tanstack/react-router";
+import type { ReactNode } from "react";
+import {
+  Home,
+  Package,
+  ShoppingCart,
+  Tag,
+  Users,
+  BarChart3,
+  FileText,
+  Settings,
+  Sun,
+  Moon,
+} from "lucide-react";
+import { useTheme } from "@/lib/theme";
+import { useConfig } from "@/lib/storage";
+
+type NavItem = {
+  to: string;
+  label: string;
+  Icon: typeof Home;
+};
+
+const NAV: NavItem[] = [
+  { to: "/", label: "Início", Icon: Home },
+  { to: "/produtos", label: "Produtos", Icon: Package },
+  { to: "/compras", label: "Compras", Icon: ShoppingCart },
+  { to: "/vendas", label: "Vendas", Icon: Tag },
+  { to: "/clientes", label: "Clientes", Icon: Users },
+  { to: "/movimentacao", label: "Fluxo", Icon: BarChart3 },
+  { to: "/relatorios", label: "Relatórios", Icon: FileText },
+  { to: "/config", label: "Config", Icon: Settings },
+];
+
+export function AppShell({ children }: { children: ReactNode }) {
+  const { mode, toggle } = useTheme();
+  const [config] = useConfig();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+
+  return (
+    <div className="min-h-screen bg-background text-foreground">
+      {/* Top bar */}
+      <header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
+          <div className="flex min-w-0 items-center gap-3">
+            <div
+              className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-[color:var(--gold)]/40 font-black tracking-tight"
+              style={{ color: "var(--gold)" }}
+            >
+              MM
+            </div>
+            <div className="min-w-0">
+              <div
+                className="truncate text-sm font-black leading-none sm:text-base"
+                style={{ color: "var(--gold)" }}
+              >
+                {config.name || "MM IRAU'CELL"}
+              </div>
+              <div className="mt-0.5 truncate text-[10px] uppercase tracking-widest text-muted-foreground">
+                Controle de estoque
+              </div>
+            </div>
+          </div>
+          <button
+            onClick={toggle}
+            aria-label="Alternar tema"
+            className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-border text-foreground hover:bg-accent"
+          >
+            {mode === "dark" ? <Sun size={18} /> : <Moon size={18} />}
+          </button>
+        </div>
+      </header>
+
+      <div className="mx-auto grid max-w-6xl grid-cols-1 gap-6 px-4 py-5 lg:grid-cols-[220px_minmax(0,1fr)]">
+        {/* Desktop sidebar */}
+        <aside className="hidden lg:block">
+          <nav className="sticky top-24 flex flex-col gap-1">
+            {NAV.map(({ to, label, Icon }) => {
+              const active = pathname === to || (to !== "/" && pathname.startsWith(to));
+              return (
+                <Link
+                  key={to}
+                  to={to}
+                  className={
+                    "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors " +
+                    (active
+                      ? "bg-accent text-foreground"
+                      : "text-muted-foreground hover:bg-accent/60 hover:text-foreground")
+                  }
+                  style={active ? { color: "var(--gold)" } : undefined}
+                >
+                  <Icon size={16} />
+                  <span>{label}</span>
+                </Link>
+              );
+            })}
+          </nav>
+        </aside>
+
+        {/* Main content */}
+        <main className="min-w-0 pb-24 lg:pb-6">{children}</main>
+      </div>
+
+      {/* Mobile bottom nav */}
+      <nav
+        className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 backdrop-blur lg:hidden"
+        style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+      >
+        <div className="mx-auto flex max-w-6xl items-stretch justify-between overflow-x-auto px-1">
+          {NAV.map(({ to, label, Icon }) => {
+            const active = pathname === to || (to !== "/" && pathname.startsWith(to));
+            return (
+              <Link
+                key={to}
+                to={to}
+                className="flex min-w-[60px] flex-1 flex-col items-center gap-1 py-2 text-[10px] text-muted-foreground"
+                style={active ? { color: "var(--gold)" } : undefined}
+              >
+                <Icon size={18} />
+                <span>{label}</span>
+              </Link>
+            );
+          })}
+        </div>
+      </nav>
+    </div>
+  );
+}
+
+export function PageHeader({
+  title,
+  subtitle,
+  action,
+}: {
+  title: string;
+  subtitle?: string;
+  action?: ReactNode;
+}) {
+  return (
+    <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 pb-4 sm:flex sm:items-end sm:justify-between">
+      <div className="min-w-0">
+        <h1
+          className="truncate text-2xl font-black tracking-tight sm:text-3xl"
+          style={{ color: "var(--gold)" }}
+        >
+          {title}
+        </h1>
+        {subtitle && (
+          <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>
+        )}
+      </div>
+      {action}
+    </div>
+  );
+}
