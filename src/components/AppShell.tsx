@@ -47,7 +47,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-[color:var(--gold)]/40 font-black tracking-tight"
               style={{ color: "var(--gold)" }}
             >
-              MM
+              SM
             </div>
             <div className="min-w-0">
               <div
