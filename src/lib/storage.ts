@@ -139,7 +139,7 @@ export const usePurchases = () => useStore<Purchase[]>("purchases", []);
 export const useCustomers = () => useStore<Customer[]>("customers", []);
 
 export const defaultConfig: BusinessConfig = {
-  name: "MM IRAU'CELL",
+  name: "STOKMASTER",
   cnpj: "",
   phone: "",
   address: "",
