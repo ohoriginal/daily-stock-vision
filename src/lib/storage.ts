@@ -7,8 +7,11 @@ export type Product = {
   cost: number;
   price: number;
   stock: number;
-  ideal: number; // ideal quantity
-  alertPct: number; // percent (0-100) below which we alert; default 15
+  ideal: number;
+  alertPct: number;
+  photo?: string; // dataURL
+  active?: boolean; // show in catalog
+  description?: string;
   createdAt: string;
 };
 
@@ -26,7 +29,10 @@ export type Sale = {
   customerId?: string;
   customerName?: string;
   items: SaleItem[];
-  total: number;
+  subtotal?: number;
+  discount?: number;
+  couponCode?: string;
+  total: number; // net (subtotal - discount)
   cost: number;
   profit: number;
   payment: "dinheiro" | "pix" | "credito" | "debito" | "outro";
@@ -52,8 +58,34 @@ export type Purchase = {
 export type Customer = {
   id: string;
   name: string;
-  phone?: string; // digits only, with country code preferred
+  phone?: string;
   notes?: string;
+  createdAt: string;
+};
+
+export type Service = {
+  id: string;
+  date: string;
+  technician: string;
+  work: string;
+  customerName: string;
+  customerPhone: string;
+  details: string;
+  photos: string[]; // 4-6 dataURLs
+  deadline: string; // ISO date
+  price: number;
+  discount: number;
+  couponCode?: string;
+  status: "aberta" | "andamento" | "concluida" | "entregue";
+};
+
+export type Promotion = {
+  id: string;
+  keyword: string; // uppercase
+  type: "fixo" | "percent";
+  value: number; // BRL or %
+  active: boolean;
+  minValue?: number; // min purchase to apply
   createdAt: string;
 };
 
@@ -62,7 +94,7 @@ export type BusinessConfig = {
   cnpj: string;
   phone: string;
   address: string;
-  taxRatePct: number; // estimated tax rate for reports (default 6 for Simples MEI-like)
+  taxRatePct: number;
 };
 
 export type ThemeMode = "dark" | "light";
@@ -72,6 +104,8 @@ const KEYS = {
   sales: "mm.sales",
   purchases: "mm.purchases",
   customers: "mm.customers",
+  services: "mm.services",
+  promotions: "mm.promotions",
   config: "mm.config",
   theme: "mm.theme",
 } as const;
@@ -137,6 +171,21 @@ export const useProducts = () => useStore<Product[]>("products", []);
 export const useSales = () => useStore<Sale[]>("sales", []);
 export const usePurchases = () => useStore<Purchase[]>("purchases", []);
 export const useCustomers = () => useStore<Customer[]>("customers", []);
+export const usePromotions = () => useStore<Promotion[]>("promotions", []);
+
+// Services: auto-prune anything older than 90 days on hydration
+export function useServices() {
+  const store = useStore<Service[]>("services", []);
+  const [value, set, hydrated] = store;
+  useEffect(() => {
+    if (!hydrated) return;
+    const cutoff = Date.now() - 90 * 24 * 60 * 60 * 1000;
+    const filtered = value.filter((s) => new Date(s.date).getTime() >= cutoff);
+    if (filtered.length !== value.length) set(filtered);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hydrated]);
+  return store;
+}
 
 export const defaultConfig: BusinessConfig = {
   name: "STOKMASTER",
@@ -180,6 +229,28 @@ export const stockLabel: Record<StockLevel, string> = {
   empty: "Zerado",
 };
 
+// Compute discount from promo
+export function applyPromo(
+  subtotal: number,
+  promo: Promotion | undefined | null,
+): { discount: number; ok: boolean; reason?: string } {
+  if (!promo) return { discount: 0, ok: false };
+  if (!promo.active) return { discount: 0, ok: false, reason: "Cupom inativo" };
+  if (promo.minValue && subtotal < promo.minValue)
+    return { discount: 0, ok: false, reason: `Mínimo ${promo.minValue}` };
+  const raw =
+    promo.type === "percent"
+      ? (subtotal * promo.value) / 100
+      : promo.value;
+  return { discount: Math.min(subtotal, Math.max(0, raw)), ok: true };
+}
+
+export function findPromo(list: Promotion[], code: string) {
+  const k = code.trim().toUpperCase();
+  if (!k) return undefined;
+  return list.find((p) => p.keyword.trim().toUpperCase() === k);
+}
+
 // Backup helpers
 export function exportBackup() {
   const payload = {
@@ -188,6 +259,8 @@ export function exportBackup() {
     sales: read(KEYS.sales, []),
     purchases: read(KEYS.purchases, []),
     customers: read(KEYS.customers, []),
+    services: read(KEYS.services, []),
+    promotions: read(KEYS.promotions, []),
     config: read(KEYS.config, defaultConfig),
   };
   const blob = new Blob([JSON.stringify(payload, null, 2)], {
@@ -211,6 +284,8 @@ export function importBackup(file: File): Promise<void> {
         if (data.sales) write(KEYS.sales, data.sales);
         if (data.purchases) write(KEYS.purchases, data.purchases);
         if (data.customers) write(KEYS.customers, data.customers);
+        if (data.services) write(KEYS.services, data.services);
+        if (data.promotions) write(KEYS.promotions, data.promotions);
         if (data.config) write(KEYS.config, data.config);
         resolve();
       } catch (e) {
@@ -220,4 +295,35 @@ export function importBackup(file: File): Promise<void> {
     reader.onerror = () => reject(reader.error);
     reader.readAsText(file);
   });
+}
+
+// Image helper: resize an image File to a JPEG dataURL (max side 1024) to keep localStorage small
+export async function fileToResizedDataURL(
+  file: File,
+  maxSide = 1024,
+  quality = 0.8,
+): Promise<string> {
+  const dataURL = await new Promise<string>((res, rej) => {
+    const fr = new FileReader();
+    fr.onload = () => res(String(fr.result));
+    fr.onerror = () => rej(fr.error);
+    fr.readAsDataURL(file);
+  });
+  const img = await new Promise<HTMLImageElement>((res, rej) => {
+    const i = new Image();
+    i.onload = () => res(i);
+    i.onerror = () => rej(new Error("img load"));
+    i.src = dataURL;
+  });
+  const scale = Math.min(1, maxSide / Math.max(img.width, img.height));
+  const w = Math.round(img.width * scale);
+  const h = Math.round(img.height * scale);
+  const canvas = document.createElement("canvas");
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext("2d")!;
+  ctx.fillStyle = "#fff";
+  ctx.fillRect(0, 0, w, h);
+  ctx.drawImage(img, 0, 0, w, h);
+  return canvas.toDataURL("image/jpeg", quality);
 }
