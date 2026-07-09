@@ -30,6 +30,13 @@ export function receiptSummaryText(sale: Sale, cfg: BusinessConfig) {
     );
   });
   lines.push("");
+  if (sale.discount && sale.discount > 0) {
+    const sub = sale.subtotal ?? sale.total + sale.discount;
+    lines.push(`Subtotal: ${brl(sub)}`);
+    lines.push(
+      `Desconto${sale.couponCode ? ` (${sale.couponCode})` : ""}: -${brl(sale.discount)}`,
+    );
+  }
   lines.push(`Total: *${brl(sale.total)}*`);
   lines.push(`Pagamento: ${paymentLabel(sale.payment)}`);
   if (sale.notes) lines.push(`Obs.: ${sale.notes}`);

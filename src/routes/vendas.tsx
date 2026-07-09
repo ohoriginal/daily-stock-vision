@@ -6,6 +6,9 @@ import {
   useSales,
   useCustomers,
   useConfig,
+  usePromotions,
+  applyPromo,
+  findPromo,
   type Sale,
   type SaleItem,
 } from "@/lib/storage";
@@ -27,12 +30,12 @@ function Vendas() {
   const [sales, setSales] = useSales();
   const [products, setProducts] = useProducts();
   const [customers] = useCustomers();
+  const [promos] = usePromotions();
   const [config] = useConfig();
   const [open, setOpen] = useState(false);
   const [receiptFor, setReceiptFor] = useState<Sale | null>(null);
 
   const finalize = (draft: Sale) => {
-    // decrement stock
     setProducts((prev) =>
       prev.map((p) => {
         const it = draft.items.find((i) => i.productId === p.id);
@@ -78,6 +81,7 @@ function Vendas() {
                 </div>
                 <div className="text-xs text-muted-foreground">
                   {fmtDateTime(s.date)} · {s.items.length} item(s) · {s.payment}
+                  {s.discount ? ` · desc ${brl(s.discount)}` : ""}
                 </div>
               </div>
               <div className="text-right">
@@ -95,6 +99,7 @@ function Vendas() {
         <SaleModal
           products={products}
           customers={customers}
+          promos={promos}
           onClose={() => setOpen(false)}
           onFinalize={finalize}
         />
@@ -113,11 +118,13 @@ function Vendas() {
 function SaleModal({
   products,
   customers,
+  promos,
   onClose,
   onFinalize,
 }: {
   products: ReturnType<typeof useProducts>[0];
   customers: ReturnType<typeof useCustomers>[0];
+  promos: ReturnType<typeof usePromotions>[0];
   onClose: () => void;
   onFinalize: (s: Sale) => void;
 }) {
@@ -126,6 +133,9 @@ function SaleModal({
   const [payment, setPayment] = useState<Sale["payment"]>("dinheiro");
   const [notes, setNotes] = useState("");
   const [pickProductId, setPickProductId] = useState("");
+  const [couponCode, setCouponCode] = useState("");
+  const [manualDiscount, setManualDiscount] = useState(0);
+  const [couponDiscount, setCouponDiscount] = useState(0);
 
   const addItem = () => {
     const p = products.find((x) => x.id === pickProductId);
@@ -144,9 +154,33 @@ function SaleModal({
     setItems((prev) => prev.map((i) => (i.productId === id ? { ...i, price } : i)));
   const removeItem = (id: string) => setItems((prev) => prev.filter((i) => i.productId !== id));
 
-  const total = items.reduce((a, b) => a + b.qty * b.price, 0);
+  const subtotal = useMemo(
+    () => items.reduce((a, b) => a + b.qty * b.price, 0),
+    [items],
+  );
   const cost = items.reduce((a, b) => a + b.qty * b.cost, 0);
+  const discount = Math.min(subtotal, Math.max(0, manualDiscount + couponDiscount));
+  const total = Math.max(0, subtotal - discount);
   const profit = total - cost;
+
+  const applyCoupon = () => {
+    if (!couponCode.trim()) {
+      setCouponDiscount(0);
+      return;
+    }
+    const promo = findPromo(promos, couponCode);
+    if (!promo) {
+      setCouponDiscount(0);
+      return toast.error("Cupom não encontrado");
+    }
+    const res = applyPromo(subtotal, promo);
+    if (!res.ok) {
+      setCouponDiscount(0);
+      return toast.error(res.reason || "Cupom inválido");
+    }
+    setCouponDiscount(Math.round(res.discount * 100) / 100);
+    toast.success("Cupom aplicado");
+  };
 
   const finish = () => {
     if (items.length === 0) return toast.error("Adicione ao menos um item");
@@ -155,6 +189,9 @@ function SaleModal({
       id: uid(),
       date: todayISO(),
       items,
+      subtotal,
+      discount,
+      couponCode: couponDiscount > 0 ? couponCode.trim().toUpperCase() : undefined,
       total,
       cost,
       profit,
@@ -239,9 +276,50 @@ function SaleModal({
             </label>
           </div>
 
+          <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
+            <input
+              value={couponCode}
+              onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+              placeholder="Cupom (palavra-chave)"
+              className={inputCls}
+            />
+            <button
+              type="button"
+              onClick={applyCoupon}
+              className="rounded-xl border border-border px-3 text-xs font-semibold"
+            >
+              Aplicar
+            </button>
+          </div>
+          <label className="block">
+            <span className="mb-1 block text-xs font-semibold text-muted-foreground">
+              Desconto manual (R$)
+            </span>
+            <input
+              type="number"
+              step="0.01"
+              min={0}
+              value={manualDiscount}
+              onChange={(e) => setManualDiscount(Number(e.target.value))}
+              className={inputCls}
+            />
+          </label>
+
           <div className="rounded-xl bg-accent p-3 text-sm">
-            <div className="flex justify-between"><span>Total</span><span className="font-black" style={{ color: "var(--gold)" }}>{brl(total)}</span></div>
-            <div className="flex justify-between text-xs text-muted-foreground"><span>Lucro estimado</span><span>{brl(profit)}</span></div>
+            <div className="flex justify-between text-xs text-muted-foreground">
+              <span>Subtotal</span><span>{brl(subtotal)}</span>
+            </div>
+            {discount > 0 && (
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>Desconto{couponDiscount > 0 ? ` (cupom ${couponCode.toUpperCase()})` : ""}</span>
+                <span>-{brl(discount)}</span>
+              </div>
+            )}
+            <div className="mt-1 flex justify-between font-black">
+              <span>Total</span>
+              <span style={{ color: "var(--gold)" }}>{brl(total)}</span>
+            </div>
+            <div className="mt-1 flex justify-between text-xs text-muted-foreground"><span>Lucro estimado</span><span>{brl(profit)}</span></div>
           </div>
         </div>
 
@@ -258,6 +336,7 @@ function ReceiptModal({ sale, onClose, phone }: { sale: Sale; onClose: () => voi
   const [config] = useConfig();
   const [busy, setBusy] = useState(false);
   const text = useMemo(() => receiptSummaryText(sale, config), [sale, config]);
+  const subtotal = sale.subtotal ?? sale.total + (sale.discount || 0);
 
   const sharePng = async () => {
     setBusy(true);
@@ -321,6 +400,12 @@ function ReceiptModal({ sale, onClose, phone }: { sale: Sale; onClose: () => voi
             </tbody>
           </table>
           <hr className="my-2 border-black/20" />
+          {sale.discount && sale.discount > 0 ? (
+            <>
+              <div className="flex justify-between text-xs"><span>Subtotal</span><span>{brl(subtotal)}</span></div>
+              <div className="flex justify-between text-xs"><span>Desconto{sale.couponCode ? ` (${sale.couponCode})` : ""}</span><span>-{brl(sale.discount)}</span></div>
+            </>
+          ) : null}
           <div className="flex justify-between text-sm font-black">
             <span>TOTAL</span><span>{brl(sale.total)}</span>
           </div>

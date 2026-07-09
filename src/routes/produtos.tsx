@@ -6,10 +6,11 @@ import {
   stockLevel,
   stockColorVar,
   stockLabel,
+  fileToResizedDataURL,
   type Product,
 } from "@/lib/storage";
 import { brl, uid, todayISO } from "@/lib/format";
-import { Plus, Search, Pencil, Trash2, X } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, X, Camera } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/produtos")({
@@ -50,6 +51,8 @@ function Produtos() {
       stock: 0,
       ideal: 10,
       alertPct: 15,
+      active: true,
+      description: "",
       createdAt: todayISO(),
     });
     setOpen(true);
@@ -132,8 +135,17 @@ function Produtos() {
             return (
               <div
                 key={p.id}
-                className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-2xl border border-border bg-card p-3"
+                className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-2xl border border-border bg-card p-3"
               >
+                <div className="h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-muted">
+                  {p.photo ? (
+                    <img src={p.photo} alt="" className="h-full w-full object-cover" />
+                  ) : (
+                    <div className="grid h-full w-full place-items-center text-[10px] text-muted-foreground">
+                      s/ foto
+                    </div>
+                  )}
+                </div>
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
                     <span
@@ -141,6 +153,11 @@ function Produtos() {
                       style={{ background: stockColorVar[lvl] }}
                     />
                     <div className="truncate font-semibold">{p.name}</div>
+                    {p.active !== false && (
+                      <span className="rounded-full border border-[color:var(--gold)]/40 px-1.5 text-[9px] font-bold uppercase tracking-wider" style={{ color: "var(--gold)" }}>
+                        Catálogo
+                      </span>
+                    )}
                   </div>
                   <div className="mt-1 text-xs text-muted-foreground">
                     {p.category || "Sem categoria"} · Custo {brl(p.cost)} · Venda {brl(p.price)}
@@ -212,6 +229,16 @@ function ProductModal({
   const set = <K extends keyof Product>(k: K, v: Product[K]) =>
     setP((prev) => ({ ...prev, [k]: v }));
 
+  const onPhoto = async (f: File | undefined) => {
+    if (!f) return;
+    try {
+      const url = await fileToResizedDataURL(f, 900, 0.8);
+      set("photo", url);
+    } catch {
+      toast.error("Não foi possível carregar a foto");
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 grid place-items-end bg-black/60 sm:place-items-center">
       <div className="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-t-3xl border border-border bg-card p-5 sm:rounded-2xl">
@@ -224,11 +251,34 @@ function ProductModal({
           </button>
         </div>
         <div className="space-y-3">
+          <div className="flex items-center gap-3">
+            <div className="h-20 w-20 overflow-hidden rounded-xl bg-muted">
+              {p.photo ? (
+                <img src={p.photo} alt="" className="h-full w-full object-cover" />
+              ) : (
+                <div className="grid h-full w-full place-items-center text-[10px] text-muted-foreground">sem foto</div>
+              )}
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className="inline-flex cursor-pointer items-center gap-1 rounded-lg border border-border px-3 py-1.5 text-xs">
+                <Camera size={12} /> Escolher foto
+                <input type="file" accept="image/*" hidden onChange={(e) => onPhoto(e.target.files?.[0])} />
+              </label>
+              {p.photo && (
+                <button onClick={() => set("photo", undefined)} className="rounded-lg border border-border px-3 py-1 text-xs text-[color:var(--stock-crit)]">
+                  Remover foto
+                </button>
+              )}
+            </div>
+          </div>
           <Field label="Nome">
             <input value={p.name} onChange={(e) => set("name", e.target.value)} className={inputCls} />
           </Field>
           <Field label="Categoria">
             <input value={p.category} onChange={(e) => set("category", e.target.value)} className={inputCls} placeholder="Ex: Capinhas, Cabos..." />
+          </Field>
+          <Field label="Descrição (para o catálogo)">
+            <textarea value={p.description || ""} onChange={(e) => set("description", e.target.value)} rows={2} className={inputCls} />
           </Field>
           <div className="grid grid-cols-2 gap-3">
             <Field label="Custo (R$)">
@@ -249,6 +299,14 @@ function ProductModal({
               <input type="number" min={1} max={100} value={p.alertPct} onChange={(e) => set("alertPct", Number(e.target.value))} className={inputCls} />
             </Field>
           </div>
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={p.active !== false}
+              onChange={(e) => set("active", e.target.checked)}
+            />
+            Mostrar no catálogo compartilhável
+          </label>
           <p className="text-xs text-muted-foreground">
             Cores: verde 100% · azul 70% · lilás 50% · vermelho abaixo de {p.alertPct}% ou 15%.
           </p>

@@ -10,12 +10,15 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as VendasRouteImport } from './routes/vendas'
+import { Route as ServicosRouteImport } from './routes/servicos'
 import { Route as RelatoriosRouteImport } from './routes/relatorios'
+import { Route as PromocoesRouteImport } from './routes/promocoes'
 import { Route as ProdutosRouteImport } from './routes/produtos'
 import { Route as MovimentacaoRouteImport } from './routes/movimentacao'
 import { Route as ConfigRouteImport } from './routes/config'
 import { Route as ComprasRouteImport } from './routes/compras'
 import { Route as ClientesRouteImport } from './routes/clientes'
+import { Route as CatalogoRouteImport } from './routes/catalogo'
 import { Route as IndexRouteImport } from './routes/index'
 
 const VendasRoute = VendasRouteImport.update({
@@ -23,9 +26,19 @@ const VendasRoute = VendasRouteImport.update({
   path: '/vendas',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ServicosRoute = ServicosRouteImport.update({
+  id: '/servicos',
+  path: '/servicos',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RelatoriosRoute = RelatoriosRouteImport.update({
   id: '/relatorios',
   path: '/relatorios',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PromocoesRoute = PromocoesRouteImport.update({
+  id: '/promocoes',
+  path: '/promocoes',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProdutosRoute = ProdutosRouteImport.update({
@@ -53,6 +66,11 @@ const ClientesRoute = ClientesRouteImport.update({
   path: '/clientes',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CatalogoRoute = CatalogoRouteImport.update({
+  id: '/catalogo',
+  path: '/catalogo',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -61,76 +79,97 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/catalogo': typeof CatalogoRoute
   '/clientes': typeof ClientesRoute
   '/compras': typeof ComprasRoute
   '/config': typeof ConfigRoute
   '/movimentacao': typeof MovimentacaoRoute
   '/produtos': typeof ProdutosRoute
+  '/promocoes': typeof PromocoesRoute
   '/relatorios': typeof RelatoriosRoute
+  '/servicos': typeof ServicosRoute
   '/vendas': typeof VendasRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/catalogo': typeof CatalogoRoute
   '/clientes': typeof ClientesRoute
   '/compras': typeof ComprasRoute
   '/config': typeof ConfigRoute
   '/movimentacao': typeof MovimentacaoRoute
   '/produtos': typeof ProdutosRoute
+  '/promocoes': typeof PromocoesRoute
   '/relatorios': typeof RelatoriosRoute
+  '/servicos': typeof ServicosRoute
   '/vendas': typeof VendasRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/catalogo': typeof CatalogoRoute
   '/clientes': typeof ClientesRoute
   '/compras': typeof ComprasRoute
   '/config': typeof ConfigRoute
   '/movimentacao': typeof MovimentacaoRoute
   '/produtos': typeof ProdutosRoute
+  '/promocoes': typeof PromocoesRoute
   '/relatorios': typeof RelatoriosRoute
+  '/servicos': typeof ServicosRoute
   '/vendas': typeof VendasRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/catalogo'
     | '/clientes'
     | '/compras'
     | '/config'
     | '/movimentacao'
     | '/produtos'
+    | '/promocoes'
     | '/relatorios'
+    | '/servicos'
     | '/vendas'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/catalogo'
     | '/clientes'
     | '/compras'
     | '/config'
     | '/movimentacao'
     | '/produtos'
+    | '/promocoes'
     | '/relatorios'
+    | '/servicos'
     | '/vendas'
   id:
     | '__root__'
     | '/'
+    | '/catalogo'
     | '/clientes'
     | '/compras'
     | '/config'
     | '/movimentacao'
     | '/produtos'
+    | '/promocoes'
     | '/relatorios'
+    | '/servicos'
     | '/vendas'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  CatalogoRoute: typeof CatalogoRoute
   ClientesRoute: typeof ClientesRoute
   ComprasRoute: typeof ComprasRoute
   ConfigRoute: typeof ConfigRoute
   MovimentacaoRoute: typeof MovimentacaoRoute
   ProdutosRoute: typeof ProdutosRoute
+  PromocoesRoute: typeof PromocoesRoute
   RelatoriosRoute: typeof RelatoriosRoute
+  ServicosRoute: typeof ServicosRoute
   VendasRoute: typeof VendasRoute
 }
 
@@ -143,11 +182,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof VendasRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/servicos': {
+      id: '/servicos'
+      path: '/servicos'
+      fullPath: '/servicos'
+      preLoaderRoute: typeof ServicosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/relatorios': {
       id: '/relatorios'
       path: '/relatorios'
       fullPath: '/relatorios'
       preLoaderRoute: typeof RelatoriosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/promocoes': {
+      id: '/promocoes'
+      path: '/promocoes'
+      fullPath: '/promocoes'
+      preLoaderRoute: typeof PromocoesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/produtos': {
@@ -185,6 +238,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ClientesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/catalogo': {
+      id: '/catalogo'
+      path: '/catalogo'
+      fullPath: '/catalogo'
+      preLoaderRoute: typeof CatalogoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -197,12 +257,15 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  CatalogoRoute: CatalogoRoute,
   ClientesRoute: ClientesRoute,
   ComprasRoute: ComprasRoute,
   ConfigRoute: ConfigRoute,
   MovimentacaoRoute: MovimentacaoRoute,
   ProdutosRoute: ProdutosRoute,
+  PromocoesRoute: PromocoesRoute,
   RelatoriosRoute: RelatoriosRoute,
+  ServicosRoute: ServicosRoute,
   VendasRoute: VendasRoute,
 }
 export const routeTree = rootRouteImport
