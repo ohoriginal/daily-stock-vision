@@ -11,6 +11,9 @@ import {
   Settings,
   Sun,
   Moon,
+  Wrench,
+  Percent,
+  Store,
 } from "lucide-react";
 import { useTheme } from "@/lib/theme";
 import { useConfig } from "@/lib/storage";
@@ -24,8 +27,11 @@ type NavItem = {
 const NAV: NavItem[] = [
   { to: "/", label: "Início", Icon: Home },
   { to: "/produtos", label: "Produtos", Icon: Package },
+  { to: "/catalogo", label: "Catálogo", Icon: Store },
   { to: "/compras", label: "Compras", Icon: ShoppingCart },
   { to: "/vendas", label: "Vendas", Icon: Tag },
+  { to: "/servicos", label: "Serviços", Icon: Wrench },
+  { to: "/promocoes", label: "Promoções", Icon: Percent },
   { to: "/clientes", label: "Clientes", Icon: Users },
   { to: "/movimentacao", label: "Fluxo", Icon: BarChart3 },
   { to: "/relatorios", label: "Relatórios", Icon: FileText },
@@ -39,7 +45,6 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      {/* Top bar */}
       <header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
           <div className="flex min-w-0 items-center gap-3">
@@ -72,7 +77,6 @@ export function AppShell({ children }: { children: ReactNode }) {
       </header>
 
       <div className="mx-auto grid max-w-6xl grid-cols-1 gap-6 px-4 py-5 lg:grid-cols-[220px_minmax(0,1fr)]">
-        {/* Desktop sidebar */}
         <aside className="hidden lg:block">
           <nav className="sticky top-24 flex flex-col gap-1">
             {NAV.map(({ to, label, Icon }) => {
@@ -97,27 +101,25 @@ export function AppShell({ children }: { children: ReactNode }) {
           </nav>
         </aside>
 
-        {/* Main content */}
-        <main className="min-w-0 pb-24 lg:pb-6">{children}</main>
+        <main className="min-w-0 pb-28 lg:pb-6">{children}</main>
       </div>
 
-      {/* Mobile bottom nav */}
       <nav
         className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 backdrop-blur lg:hidden"
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       >
-        <div className="mx-auto flex max-w-6xl items-stretch justify-between overflow-x-auto px-1">
+        <div className="mx-auto flex max-w-6xl items-stretch justify-between gap-1 overflow-x-auto px-1">
           {NAV.map(({ to, label, Icon }) => {
             const active = pathname === to || (to !== "/" && pathname.startsWith(to));
             return (
               <Link
                 key={to}
                 to={to}
-                className="flex min-w-[60px] flex-1 flex-col items-center gap-1 py-2 text-[10px] text-muted-foreground"
+                className="flex min-w-[62px] flex-col items-center gap-1 py-2 text-[10px] text-muted-foreground"
                 style={active ? { color: "var(--gold)" } : undefined}
               >
                 <Icon size={18} />
-                <span>{label}</span>
+                <span className="whitespace-nowrap">{label}</span>
               </Link>
             );
           })}
