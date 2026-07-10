@@ -1,93 +1,100 @@
+# Empacotar STOKMASTER para uso 100% offline
 
-## Visão geral
+## O que já está pronto
 
-Vamos construir um sistema de controle de estoque **MM IRAU'CELL** inspirado no ira-stock-buddy, com todas as suas melhorias. Tudo salvo **localmente no aparelho** (localStorage), sem login, funcionando offline. Layout responsivo (celular e computador).
+- App inteiro roda no navegador, sem backend, sem Supabase, sem Firebase, sem API externa
+- Dados salvos em `localStorage` via `src/lib/storage.ts`
+- Backup/restauração em JSON já existe (`exportBackup` / `importBackup` em `/config`)
 
-## Estrutura de páginas
+Só falta empacotar. Nada precisa ser removido do código (não há dependência de rede a limpar).
 
-- `/` — **Painel**: resumo (produtos, estoque, vendas/compras do mês, lucro do mês, valor total do estoque) + atalhos + alertas de estoque baixo.
-- `/produtos` — lista, busca, filtro por categoria/status, cadastro com **quantidade ideal** e **limite de alerta**.
-- `/compras` — registrar entradas de mercadoria.
-- `/vendas` — registrar vendas, gerar recibo e enviar por WhatsApp.
-- `/clientes` — cadastro + histórico de compras por cliente.
-- `/movimentacao` — **nova aba**: entradas/saídas por semana, mês e ano, com gráficos separados de **Faturamento**, **Lucro** e **Pagamentos**.
-- `/relatorios` — relatórios detalhados para Receita Federal (escolher formato na hora do download).
-- `/config` — tema (Preto+Dourado ↔ Branco+Preto), backup/restaurar JSON.
+## 1. PWA instalável com Service Worker
 
-## Regra de cor do estoque (por produto)
+**Instalo:** `vite-plugin-pwa` (dev dependency).
 
-Baseado em `estoque_atual / quantidade_ideal`:
+**Crio:**
+- `public/manifest.webmanifest` — nome STOKMASTER, `display: standalone`, `theme_color` do tema dourado, `start_url: "/"`, `scope: "/"`
+- Ícones PWA gerados via `imagegen`: 192×192, 512×512, e 512×512 maskable (fundo sólido dourado com logo "SM"), guardados como assets em `public/`
+- `src/lib/pwa-register.ts` — wrapper com todas as guardas do skill Lovable (não registra em `id-preview--*`, `preview--*`, `*.lovableproject.com`, dev, iframe, `?sw=off`), usa `registerType: "autoUpdate"`
+- Registro chamado de `src/start.ts` (só ativa em produção publicada)
 
-- ≥ 100% → **verde**
-- ≥ 70% e < 100% → **azul**
-- ≥ 50% e < 70% → **lilás**
-- ≥ limite de alerta e < 50% → **amarelo/laranja** (transição)
-- ≤ 15% ou abaixo do limite de alerta → **vermelho** + mensagem de alerta destacada no Painel
+**Configuro em `vite.config.ts`:**
+- Plugin com `registerType: "autoUpdate"`, `injectRegister: null`, `devOptions: { enabled: false }`, `filename: "sw.js"`
+- Runtime caching: `NetworkFirst` para navegações HTML, `CacheFirst` para assets hasheados same-origin, exclui `/~oauth`
+- `precacheEntries` cobre todo o app-shell → funciona offline após primeira visita
 
-Cada produto guarda: nome, categoria, custo, preço, estoque atual, **quantidade ideal**, **limite de alerta** (padrão 15%).
+**Head tags em `src/routes/__root.tsx`:** `<link rel="manifest">`, `apple-touch-icon`, `theme-color` já existe.
 
-## Movimentação (semana / mês / ano)
+## 2. APK via PWABuilder
 
-Abas com seletor de período. Três cartões/gráficos independentes:
+Não mexo em código nativo. Depois de publicar, você:
 
-1. **Faturamento** (soma das vendas)
-2. **Lucro** (vendas − custo dos produtos vendidos)
-3. **Pagamentos** (compras/despesas)
+1. Abre `pwabuilder.com`
+2. Cola `https://daily-stock-vision.lovable.app`
+3. Baixa o pacote Android assinado (`.apk` + `.aab`)
+4. Instala no celular
 
-Gráfico de linha ou barra usando **Recharts**, com listagem detalhada abaixo.
+Vou incluir no `/config` um card "Instalar como app" com esse passo-a-passo e um botão que abre o PWABuilder já com a URL preenchida.
 
-## Relatórios para Receita Federal
+## 3. Electron para Windows (`.exe`)
 
-Tela com filtros de período (data inicial/final). Ao clicar em "Baixar", o usuário escolhe o formato na hora:
+Sigo o skill Electron do Lovable:
 
-- **PDF detalhado** (jsPDF): capa, resumo, tabelas de vendas, compras, totais, imposto estimado.
-- **CSV / Excel** (SheetJS): planilha com todas as movimentações.
-- **Livro Caixa simplificado** (PDF): entradas e saídas linha a linha, estilo MEI.
+**Instalo (via `bun add -d`):** `electron`, `@electron/packager`.
 
-Todos com CNPJ/nome do negócio (configurável em `/config`).
+**Crio:**
+- `electron/main.cjs` — CommonJS, `BrowserWindow` 1200×800, carrega `dist/index.html` via `file://`, `contextIsolation: true`, `nodeIntegration: false`
+- `electron/preload.cjs` — vazio (não precisa de bridge; localStorage funciona nativo no Electron)
 
-## Recibo por WhatsApp
+**Ajusto:**
+- `vite.config.ts`: adiciono `base: './'` (crítico, senão janela branca no `file://`)
+- `package.json`: `"main": "electron/main.cjs"` + scripts `build:electron` e `pack:win`
 
-Após finalizar uma venda:
-- Gera **recibo em imagem PNG** (html2canvas) e também **PDF** (jsPDF).
-- Botão **"Enviar por WhatsApp"** usa a Web Share API do celular (`navigator.share` com o arquivo) para abrir o WhatsApp com o recibo já anexado.
-- Fallback: baixa o arquivo + abre `wa.me/?text=...` com resumo em texto.
+**Persistência dos dados no Electron:**
+- Chromium do Electron mantém `localStorage` no diretório de userData por padrão (`%APPDATA%/STOKMASTER/Local Storage/`). Dados persistem entre execuções automaticamente — nenhum código adicional necessário.
+- Backup JSON continua funcionando idêntico (mesma tela `/config`).
 
-## Temas
+**Empacoto no sandbox:**
+```
+npx @electron/packager . "STOKMASTER" \
+  --platform=win32 --arch=x64 \
+  --out=electron-release --overwrite \
+  --ignore=node_modules --ignore=^/src --ignore=^/public --ignore=^/electron-release
+```
+Depois zipo em `/mnt/documents/STOKMASTER-windows-x64.zip` pra você baixar. Extrai → duplo clique em `STOKMASTER.exe`.
 
-Dois temas alternáveis com um botão:
-- **Preto + Dourado** (padrão, como o original)
-- **Branco + Preto** (claro, minimalista)
+Aviso: no sandbox Linux não dá pra gerar instalador `.exe` (setup). O `.zip` extraído contém o executável funcional; não tem installer bonitinho, mas roda 100%.
 
-Preferência salva no localStorage. Tokens semânticos em `src/styles.css` (nada de cor hardcoded).
+## 4. Assets 100% offline
 
-## Backup / Restaurar
+- Confirmo que não há `@import` de URL remota em `src/styles.css` nem `<link>` pra Google Fonts / CDN externa no `__root.tsx`
+- Ícones da PWA e da Electron ficam em `public/` (não vão pra CDN de assets Lovable, senão o Electron não acha via `file://`)
+- Todo import de imagem já é local
 
-Botão em `/config`:
-- **Exportar tudo** → baixa `.json` com produtos, vendas, compras, clientes, configs.
-- **Importar** → sobrescreve dados a partir de um `.json`.
+## 5. Aviso sobre migração de dados
 
-## Layout responsivo
+Cada formato tem storage isolado (Chrome web ≠ Electron ≠ APK). Vou adicionar no `/config` um alerta claro: "Antes de instalar em outro dispositivo, exporte o backup JSON e importe no novo app."
 
-- Celular: navegação inferior (bottom tabs) como no original.
-- Desktop (≥ 1024px): navegação lateral (sidebar) + conteúdo mais largo, cartões em grid.
+## Arquivos alterados/criados
 
-## Detalhes técnicos
+**Criar:**
+- `public/manifest.webmanifest`
+- `public/icon-192.png`, `public/icon-512.png`, `public/icon-maskable-512.png` (via imagegen)
+- `src/lib/pwa-register.ts`
+- `electron/main.cjs`
+- `electron/preload.cjs`
 
-- **Stack**: TanStack Start + React + Tailwind v4 + shadcn/ui + Recharts + jsPDF + html2canvas + SheetJS (xlsx).
-- **Storage**: camada única em `src/lib/storage.ts` com hooks (`useProducts`, `useSales`, `useCustomers`, etc.) baseados em localStorage + evento de sincronização.
-- **Tema**: classe `.dark` / `.light-gold` no `<html>`; variáveis oklch em `src/styles.css`.
-- **WhatsApp share**: `navigator.canShare({ files })` quando disponível; senão, download + `wa.me`.
-- **Rotas**: arquivos em `src/routes/` (index, produtos, compras, vendas, clientes, movimentacao, relatorios, config).
-- **Sem backend**: nada de Lovable Cloud; nenhuma chave/API externa.
+**Editar:**
+- `vite.config.ts` — adicionar `vite-plugin-pwa` e `base: './'`
+- `package.json` — adicionar `main`, scripts electron, deps
+- `src/start.ts` — chamar `registerPWA()`
+- `src/routes/__root.tsx` — `<link rel="manifest">` e ícones apple-touch
+- `src/routes/config.tsx` — card "Instalar como app" com link PWABuilder e aviso de backup
 
-## Sugestões extras que vou incluir (você aprovou)
+## O que você recebe no final
 
-- Categorias e busca de produtos
-- Gráficos de vendas na aba Movimentação
-- Backup/restaurar JSON
-- Cadastro de clientes com histórico
+1. App publicado com "Instalar" disponível no Chrome/Edge/Safari (celular e desktop)
+2. Instruções + botão pra gerar o APK no PWABuilder
+3. `STOKMASTER-windows-x64.zip` em `/mnt/documents/` pra baixar e rodar no Windows
 
-## Próximos passos
-
-Se aprovar, começo criando o sistema de temas + storage + layout responsivo, depois as páginas na ordem: Produtos → Vendas (com recibo) → Compras → Clientes → Movimentação → Relatórios → Painel.
+Aprovo pra implementar?

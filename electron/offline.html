@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <title>STOKMASTER — Sem conexão</title>
+    <style>
+      html, body { margin: 0; height: 100%; background: #141210; color: #f5f5f5;
+        font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+      .wrap { min-height: 100%; display: flex; align-items: center; justify-content: center; padding: 24px; }
+      .card { max-width: 460px; text-align: center; }
+      h1 { color: #d4af37; margin: 0 0 12px; font-size: 22px; }
+      p { color: #cfcfcf; line-height: 1.5; font-size: 14px; }
+      button { margin-top: 20px; background: #d4af37; color: #141210;
+        border: 0; padding: 10px 20px; border-radius: 12px; font-weight: 600; cursor: pointer; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="card">
+        <h1>Sem conexão</h1>
+        <p>
+          O STOKMASTER precisa se conectar à internet na <b>primeira</b> vez que abre
+          em cada computador. Depois disso funciona 100% offline.
+        </p>
+        <button onclick="location.reload()">Tentar de novo</button>
+      </div>
+    </div>
+  </body>
+</html>
