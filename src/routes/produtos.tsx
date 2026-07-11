@@ -393,6 +393,16 @@ function ProductModal({
             Salvar
           </button>
         </div>
+        {scanOpen && (
+          <BarcodeScanner
+            onDetected={(code) => {
+              set("barcode", code);
+              setScanOpen(false);
+              toast.success("Código lido");
+            }}
+            onClose={() => setScanOpen(false)}
+          />
+        )}
       </div>
     </div>
   );
