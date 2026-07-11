@@ -1,9 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { usePromotions, type Promotion } from "@/lib/storage";
 import { uid, todayISO, brl } from "@/lib/format";
-import { Plus, Trash2, X, Percent } from "lucide-react";
+import { Plus, Trash2, X, Percent, Search } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/promocoes")({
@@ -14,6 +14,13 @@ function Promocoes() {
   const [promos, setPromos] = usePromotions();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Promotion | null>(null);
+  const [q, setQ] = useState("");
+
+  const filtered = useMemo(() => {
+    const qn = q.trim().toUpperCase();
+    if (!qn) return promos;
+    return promos.filter((p) => p.keyword.toUpperCase().includes(qn));
+  }, [promos, q]);
 
   const openNew = () => {
     setEditing({
@@ -80,13 +87,32 @@ function Promocoes() {
         ganhar o desconto configurado.
       </p>
 
+      {promos.length > 0 && (
+        <div className="relative mb-3">
+          <Search
+            size={16}
+            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+          />
+          <input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Buscar cupom pela palavra-chave..."
+            className="w-full rounded-xl border border-border bg-card py-2 pl-9 pr-3 text-sm outline-none focus:border-[color:var(--gold)]"
+          />
+        </div>
+      )}
+
       {promos.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
           Nenhuma promoção. Toque em Novo cupom.
         </div>
+      ) : filtered.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
+          Nenhum cupom encontrado.
+        </div>
       ) : (
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-          {promos.map((p) => (
+          {filtered.map((p) => (
             <div
               key={p.id}
               className="rounded-2xl border border-border bg-card p-3"

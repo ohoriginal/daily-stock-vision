@@ -10,8 +10,9 @@ import {
   type Product,
 } from "@/lib/storage";
 import { brl, uid, todayISO } from "@/lib/format";
-import { Plus, Search, Pencil, Trash2, X, Camera } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, X, Camera, ScanLine } from "lucide-react";
 import { toast } from "sonner";
+import { BarcodeScanner } from "@/components/BarcodeScanner";
 
 export const Route = createFileRoute("/produtos")({
   component: Produtos,
@@ -22,6 +23,8 @@ function Produtos() {
   const [q, setQ] = useState("");
   const [cat, setCat] = useState("todas");
   const [status, setStatus] = useState<"todos" | "alerta">("todos");
+  const [sort, setSort] = useState<"nome" | "preco-asc" | "preco-desc">("nome");
+  const [scanning, setScanning] = useState(false);
   const [editing, setEditing] = useState<Product | null>(null);
   const [open, setOpen] = useState(false);
 
@@ -31,15 +34,42 @@ function Produtos() {
     [products],
   );
 
-  const filtered = products.filter((p) => {
-    if (q && !p.name.toLowerCase().includes(q.toLowerCase())) return false;
-    if (cat !== "todas" && p.category !== cat) return false;
-    if (status === "alerta") {
-      const l = stockLevel(p);
-      if (l !== "crit" && l !== "low") return false;
+  const filtered = useMemo(() => {
+    const qn = q.trim().toLowerCase();
+    const arr = products.filter((p) => {
+      if (qn) {
+        const hit =
+          p.name.toLowerCase().includes(qn) ||
+          (p.barcode || "").toLowerCase().includes(qn) ||
+          (p.category || "").toLowerCase().includes(qn);
+        if (!hit) return false;
+      }
+      if (cat !== "todas" && p.category !== cat) return false;
+      if (status === "alerta") {
+        const l = stockLevel(p);
+        if (l !== "crit" && l !== "low") return false;
+      }
+      return true;
+    });
+    if (sort === "preco-asc") arr.sort((a, b) => a.price - b.price);
+    else if (sort === "preco-desc") arr.sort((a, b) => b.price - a.price);
+    else arr.sort((a, b) => a.name.localeCompare(b.name));
+    return arr;
+  }, [products, q, cat, status, sort]);
+
+  const onScan = (code: string) => {
+    setScanning(false);
+    const found = products.find((p) => (p.barcode || "") === code);
+    if (found) {
+      setQ(found.name);
+      toast.success(`Encontrado: ${found.name}`);
+    } else {
+      setQ(code);
+      toast.message("Nenhum produto com esse código", {
+        description: "Você pode cadastrá-lo agora.",
+      });
     }
-    return true;
-  });
+  };
 
   const openNew = () => {
     setEditing({
@@ -90,7 +120,7 @@ function Produtos() {
         }
       />
 
-      <div className="mb-4 grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_auto_auto]">
+      <div className="mb-3 grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
         <div className="relative">
           <Search
             size={16}
@@ -99,10 +129,19 @@ function Produtos() {
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Buscar por nome..."
+            placeholder="Buscar por nome, categoria ou código..."
             className="w-full rounded-xl border border-border bg-card py-2 pl-9 pr-3 text-sm outline-none focus:border-[color:var(--gold)]"
           />
         </div>
+        <button
+          onClick={() => setScanning(true)}
+          className="inline-flex items-center justify-center gap-2 rounded-xl border border-[color:var(--gold)]/60 bg-card px-3 py-2 text-sm font-semibold"
+          style={{ color: "var(--gold)" }}
+        >
+          <ScanLine size={16} /> Escanear
+        </button>
+      </div>
+      <div className="mb-4 grid grid-cols-3 gap-2">
         <select
           value={cat}
           onChange={(e) => setCat(e.target.value)}
@@ -114,14 +153,27 @@ function Produtos() {
           ))}
         </select>
         <select
+          value={sort}
+          onChange={(e) => setSort(e.target.value as typeof sort)}
+          className="rounded-xl border border-border bg-card px-3 py-2 text-sm"
+        >
+          <option value="nome">Ordem: Nome</option>
+          <option value="preco-asc">Preço: menor → maior</option>
+          <option value="preco-desc">Preço: maior → menor</option>
+        </select>
+        <select
           value={status}
-          onChange={(e) => setStatus(e.target.value as any)}
+          onChange={(e) => setStatus(e.target.value as "todos" | "alerta")}
           className="rounded-xl border border-border bg-card px-3 py-2 text-sm"
         >
           <option value="todos">Todos</option>
-          <option value="alerta">Somente em alerta</option>
+          <option value="alerta">Em alerta</option>
         </select>
       </div>
+
+      {scanning && (
+        <BarcodeScanner onDetected={onScan} onClose={() => setScanning(false)} />
+      )}
 
       {filtered.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
@@ -226,6 +278,7 @@ function ProductModal({
   onSave: (p: Product) => void;
 }) {
   const [p, setP] = useState<Product>(value);
+  const [scanOpen, setScanOpen] = useState(false);
   const set = <K extends keyof Product>(k: K, v: Product[K]) =>
     setP((prev) => ({ ...prev, [k]: v }));
 
@@ -277,6 +330,24 @@ function ProductModal({
           <Field label="Categoria">
             <input value={p.category} onChange={(e) => set("category", e.target.value)} className={inputCls} placeholder="Ex: Capinhas, Cabos..." />
           </Field>
+          <Field label="Código de barras (opcional)">
+            <div className="flex gap-2">
+              <input
+                value={p.barcode || ""}
+                onChange={(e) => set("barcode", e.target.value)}
+                placeholder="Escaneie ou digite"
+                className={inputCls}
+              />
+              <button
+                type="button"
+                onClick={() => setScanOpen(true)}
+                className="inline-flex items-center gap-1 rounded-xl border border-[color:var(--gold)]/60 px-3 text-xs font-semibold"
+                style={{ color: "var(--gold)" }}
+              >
+                <ScanLine size={14} /> Ler
+              </button>
+            </div>
+          </Field>
           <Field label="Descrição (para o catálogo)">
             <textarea value={p.description || ""} onChange={(e) => set("description", e.target.value)} rows={2} className={inputCls} />
           </Field>
@@ -322,6 +393,16 @@ function ProductModal({
             Salvar
           </button>
         </div>
+        {scanOpen && (
+          <BarcodeScanner
+            onDetected={(code) => {
+              set("barcode", code);
+              setScanOpen(false);
+              toast.success("Código lido");
+            }}
+            onClose={() => setScanOpen(false)}
+          />
+        )}
       </div>
     </div>
   );

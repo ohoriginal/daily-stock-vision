@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import {
   useServices,
@@ -18,6 +18,7 @@ import {
   Share2,
   Wrench,
   Camera,
+  Search,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -70,6 +71,25 @@ function Servicos() {
   const [config] = useConfig();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Service | null>(null);
+  const [q, setQ] = useState("");
+  const [filterStatus, setFilterStatus] = useState<"todos" | Service["status"]>(
+    "todos",
+  );
+
+  const filtered = useMemo(() => {
+    const qn = q.trim().toLowerCase();
+    return services.filter((s) => {
+      if (filterStatus !== "todos" && s.status !== filterStatus) return false;
+      if (!qn) return true;
+      return (
+        s.work.toLowerCase().includes(qn) ||
+        s.customerName.toLowerCase().includes(qn) ||
+        (s.technician || "").toLowerCase().includes(qn) ||
+        (s.customerPhone || "").toLowerCase().includes(qn) ||
+        (s.details || "").toLowerCase().includes(qn)
+      );
+    });
+  }, [services, q, filterStatus]);
 
   const openNew = () => {
     const now = new Date();
@@ -139,13 +159,47 @@ function Servicos() {
         }
       />
 
+      {services.length > 0 && (
+        <div className="mb-3 grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
+          <div className="relative">
+            <Search
+              size={16}
+              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+            />
+            <input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Buscar por serviço, cliente, técnico..."
+              className="w-full rounded-xl border border-border bg-card py-2 pl-9 pr-3 text-sm outline-none focus:border-[color:var(--gold)]"
+            />
+          </div>
+          <select
+            value={filterStatus}
+            onChange={(e) =>
+              setFilterStatus(e.target.value as typeof filterStatus)
+            }
+            className="rounded-xl border border-border bg-card px-3 py-2 text-sm"
+          >
+            <option value="todos">Todos status</option>
+            <option value="aberta">Aberta</option>
+            <option value="andamento">Em andamento</option>
+            <option value="concluida">Concluída</option>
+            <option value="entregue">Entregue</option>
+          </select>
+        </div>
+      )}
+
       {services.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
           Nenhuma ordem de serviço.
         </div>
+      ) : filtered.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
+          Nenhum resultado.
+        </div>
       ) : (
         <div className="space-y-2">
-          {services.map((s) => {
+          {filtered.map((s) => {
             const total = Math.max(0, s.price - (s.discount || 0));
             return (
               <div

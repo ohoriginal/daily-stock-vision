@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { useCustomers, useSales, type Customer } from "@/lib/storage";
 import { brl, fmtDate, todayISO, uid } from "@/lib/format";
-import { Plus, X, Trash2, Pencil, MessageCircle } from "lucide-react";
+import { Plus, X, Trash2, Pencil, MessageCircle, Search } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/clientes")({
@@ -15,6 +15,18 @@ function Clientes() {
   const [sales] = useSales();
   const [editing, setEditing] = useState<Customer | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [q, setQ] = useState("");
+
+  const filtered = useMemo(() => {
+    const qn = q.trim().toLowerCase();
+    if (!qn) return customers;
+    return customers.filter(
+      (c) =>
+        c.name.toLowerCase().includes(qn) ||
+        (c.phone || "").toLowerCase().includes(qn) ||
+        (c.notes || "").toLowerCase().includes(qn),
+    );
+  }, [customers, q]);
 
   const salesByCustomer = useMemo(() => {
     const m = new Map<string, typeof sales>();
@@ -56,13 +68,32 @@ function Clientes() {
         }
       />
 
+      {customers.length > 0 && (
+        <div className="relative mb-3">
+          <Search
+            size={16}
+            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+          />
+          <input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Buscar por nome ou telefone..."
+            className="w-full rounded-xl border border-border bg-card py-2 pl-9 pr-3 text-sm outline-none focus:border-[color:var(--gold)]"
+          />
+        </div>
+      )}
+
       {customers.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
           Nenhum cliente ainda.
         </div>
+      ) : filtered.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
+          Nenhum resultado.
+        </div>
       ) : (
         <div className="space-y-2">
-          {customers.map((c) => {
+          {filtered.map((c) => {
             const list = salesByCustomer.get(c.id) || [];
             const total = list.reduce((a, b) => a + b.total, 0);
             const isOpen = expanded === c.id;

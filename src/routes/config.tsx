@@ -4,7 +4,7 @@ import { AppShell, PageHeader } from "@/components/AppShell";
 import { useConfig, exportBackup, importBackup } from "@/lib/storage";
 import { useTheme } from "@/lib/theme";
 import { toast } from "sonner";
-import { Download, Upload, Sun, Moon, Smartphone, Monitor } from "lucide-react";
+import { Download, Upload, Sun, Moon } from "lucide-react";
 
 export const Route = createFileRoute("/config")({
   component: Config,
@@ -86,37 +86,6 @@ function Config() {
           </div>
         </section>
 
-        <section className="rounded-2xl border border-border bg-card p-4">
-          <h3 className="mb-3 text-sm font-semibold" style={{ color: "var(--gold)" }}>Instalar como app (offline)</h3>
-          <p className="mb-3 text-xs text-muted-foreground">Depois de instalado, o STOKMASTER abre em tela cheia e funciona 100% sem internet. Dados salvos localmente.</p>
-          <div className="space-y-3">
-            <div className="rounded-xl border border-border p-3">
-              <div className="flex items-center gap-2 text-sm font-semibold"><Smartphone size={16} style={{ color: "var(--gold)" }} /> Celular (Android / iPhone)</div>
-              <ol className="mt-2 list-decimal space-y-1 pl-5 text-xs text-muted-foreground">
-                <li>Abra este site no <b>Chrome</b> (Android) ou <b>Safari</b> (iPhone).</li>
-                <li>Toque no menu ⋮ / <b>Compartilhar</b> → <b>Instalar app</b> / <b>Adicionar à Tela Inicial</b>.</li>
-                <li>O ícone STOKMASTER aparece na tela como um app.</li>
-              </ol>
-            </div>
-            <div className="rounded-xl border border-border p-3">
-              <div className="flex items-center gap-2 text-sm font-semibold"><Smartphone size={16} style={{ color: "var(--gold)" }} /> Gerar arquivo .APK (Android)</div>
-              <p className="mt-2 text-xs text-muted-foreground">Use o PWABuilder gratuito para gerar um .apk assinado desta PWA.</p>
-              <a
-                href="https://www.pwabuilder.com/reportcard?site=https://daily-stock-vision.lovable.app"
-                target="_blank"
-                rel="noreferrer"
-                className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-[color:var(--gold)] py-2 text-sm font-semibold"
-                style={{ color: "var(--gold)" }}
-              >
-                Abrir PWABuilder
-              </a>
-            </div>
-            <div className="rounded-xl border border-border p-3">
-              <div className="flex items-center gap-2 text-sm font-semibold"><Monitor size={16} style={{ color: "var(--gold)" }} /> Windows (.exe)</div>
-              <p className="mt-2 text-xs text-muted-foreground">Está disponível como aplicativo Electron. Peça ao desenvolvedor o pacote <code>STOKMASTER-windows-x64.zip</code> — basta extrair e clicar em <code>STOKMASTER.exe</code>. Os dados ficam salvos no próprio computador.</p>
-            </div>
-          </div>
-        </section>
       </div>
     </AppShell>
   );
