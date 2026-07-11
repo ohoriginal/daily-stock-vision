@@ -1,9 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { usePromotions, type Promotion } from "@/lib/storage";
 import { uid, todayISO, brl } from "@/lib/format";
-import { Plus, Trash2, X, Percent } from "lucide-react";
+import { Plus, Trash2, X, Percent, Search } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/promocoes")({
@@ -14,6 +14,13 @@ function Promocoes() {
   const [promos, setPromos] = usePromotions();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Promotion | null>(null);
+  const [q, setQ] = useState("");
+
+  const filtered = useMemo(() => {
+    const qn = q.trim().toUpperCase();
+    if (!qn) return promos;
+    return promos.filter((p) => p.keyword.toUpperCase().includes(qn));
+  }, [promos, q]);
 
   const openNew = () => {
     setEditing({
