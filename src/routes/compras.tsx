@@ -113,13 +113,33 @@ function PurchaseModal({
   const [supplier, setSupplier] = useState("");
   const [notes, setNotes] = useState("");
   const [pickId, setPickId] = useState("");
+  const [scanning, setScanning] = useState(false);
+
+  const addProduct = (p: (typeof products)[number]) => {
+    setItems((prev) => {
+      const existing = prev.find((i) => i.productId === p.id);
+      if (existing)
+        return prev.map((i) =>
+          i.productId === p.id ? { ...i, qty: i.qty + 1 } : i,
+        );
+      return [...prev, { productId: p.id, name: p.name, qty: 1, cost: p.cost }];
+    });
+  };
 
   const addItem = () => {
     const p = products.find((x) => x.id === pickId);
     if (!p) return toast.error("Escolha um produto");
     if (items.some((i) => i.productId === p.id)) return toast.error("Já adicionado");
-    setItems((prev) => [...prev, { productId: p.id, name: p.name, qty: 1, cost: p.cost }]);
+    addProduct(p);
     setPickId("");
+  };
+
+  const onScan = (code: string) => {
+    setScanning(false);
+    const p = products.find((x) => (x.barcode || "") === code);
+    if (!p) return toast.error("Produto com esse código não encontrado");
+    addProduct(p);
+    toast.success(`+1 ${p.name}`);
   };
 
   const total = items.reduce((a, b) => a + b.qty * b.cost, 0);
