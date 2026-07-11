@@ -390,6 +390,9 @@ function SaleModal({
           <button onClick={finish} className="flex-1 rounded-xl bg-primary py-2 text-sm font-semibold text-primary-foreground">Finalizar</button>
         </div>
       </div>
+      {scanning && (
+        <BarcodeScanner onDetected={onScan} onClose={() => setScanning(false)} />
+      )}
     </div>
   );
 }
