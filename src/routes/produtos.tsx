@@ -10,8 +10,9 @@ import {
   type Product,
 } from "@/lib/storage";
 import { brl, uid, todayISO } from "@/lib/format";
-import { Plus, Search, Pencil, Trash2, X, Camera } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, X, Camera, ScanLine } from "lucide-react";
 import { toast } from "sonner";
+import { BarcodeScanner } from "@/components/BarcodeScanner";
 
 export const Route = createFileRoute("/produtos")({
   component: Produtos,
@@ -22,6 +23,8 @@ function Produtos() {
   const [q, setQ] = useState("");
   const [cat, setCat] = useState("todas");
   const [status, setStatus] = useState<"todos" | "alerta">("todos");
+  const [sort, setSort] = useState<"nome" | "preco-asc" | "preco-desc">("nome");
+  const [scanning, setScanning] = useState(false);
   const [editing, setEditing] = useState<Product | null>(null);
   const [open, setOpen] = useState(false);
 
@@ -31,15 +34,42 @@ function Produtos() {
     [products],
   );
 
-  const filtered = products.filter((p) => {
-    if (q && !p.name.toLowerCase().includes(q.toLowerCase())) return false;
-    if (cat !== "todas" && p.category !== cat) return false;
-    if (status === "alerta") {
-      const l = stockLevel(p);
-      if (l !== "crit" && l !== "low") return false;
+  const filtered = useMemo(() => {
+    const qn = q.trim().toLowerCase();
+    const arr = products.filter((p) => {
+      if (qn) {
+        const hit =
+          p.name.toLowerCase().includes(qn) ||
+          (p.barcode || "").toLowerCase().includes(qn) ||
+          (p.category || "").toLowerCase().includes(qn);
+        if (!hit) return false;
+      }
+      if (cat !== "todas" && p.category !== cat) return false;
+      if (status === "alerta") {
+        const l = stockLevel(p);
+        if (l !== "crit" && l !== "low") return false;
+      }
+      return true;
+    });
+    if (sort === "preco-asc") arr.sort((a, b) => a.price - b.price);
+    else if (sort === "preco-desc") arr.sort((a, b) => b.price - a.price);
+    else arr.sort((a, b) => a.name.localeCompare(b.name));
+    return arr;
+  }, [products, q, cat, status, sort]);
+
+  const onScan = (code: string) => {
+    setScanning(false);
+    const found = products.find((p) => (p.barcode || "") === code);
+    if (found) {
+      setQ(found.name);
+      toast.success(`Encontrado: ${found.name}`);
+    } else {
+      setQ(code);
+      toast.message("Nenhum produto com esse código", {
+        description: "Você pode cadastrá-lo agora.",
+      });
     }
-    return true;
-  });
+  };
 
   const openNew = () => {
     setEditing({
