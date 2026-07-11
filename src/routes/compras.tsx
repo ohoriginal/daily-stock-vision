@@ -58,13 +58,32 @@ function Compras() {
         }
       />
 
+      {purchases.length > 0 && (
+        <div className="relative mb-3">
+          <Search
+            size={16}
+            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+          />
+          <input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Buscar por fornecedor ou produto..."
+            className="w-full rounded-xl border border-border bg-card py-2 pl-9 pr-3 text-sm outline-none focus:border-[color:var(--gold)]"
+          />
+        </div>
+      )}
+
       {purchases.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
           Nenhuma compra ainda.
         </div>
+      ) : filtered.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
+          Nenhum resultado.
+        </div>
       ) : (
         <div className="space-y-2">
-          {purchases.map((p) => (
+          {filtered.map((p) => (
             <div key={p.id} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-2xl border border-border bg-card p-3">
               <div className="min-w-0">
                 <div className="truncate font-semibold">{p.supplier || "Fornecedor não informado"}</div>
