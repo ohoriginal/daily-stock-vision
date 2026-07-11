@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import {
   useProducts,
@@ -8,8 +8,9 @@ import {
   type PurchaseItem,
 } from "@/lib/storage";
 import { brl, fmtDateTime, todayISO, uid } from "@/lib/format";
-import { Plus, X, Trash2 } from "lucide-react";
+import { Plus, X, Trash2, Search, ScanLine } from "lucide-react";
 import { toast } from "sonner";
+import { BarcodeScanner } from "@/components/BarcodeScanner";
 
 export const Route = createFileRoute("/compras")({
   component: Compras,
@@ -19,6 +20,18 @@ function Compras() {
   const [purchases, setPurchases] = usePurchases();
   const [products, setProducts] = useProducts();
   const [open, setOpen] = useState(false);
+  const [q, setQ] = useState("");
+
+  const filtered = useMemo(() => {
+    const qn = q.trim().toLowerCase();
+    if (!qn) return purchases;
+    return purchases.filter(
+      (p) =>
+        (p.supplier || "").toLowerCase().includes(qn) ||
+        p.items.some((i) => i.name.toLowerCase().includes(qn)) ||
+        (p.notes || "").toLowerCase().includes(qn),
+    );
+  }, [purchases, q]);
 
   const finalize = (draft: Purchase) => {
     setProducts((prev) =>
