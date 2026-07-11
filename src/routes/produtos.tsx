@@ -278,6 +278,7 @@ function ProductModal({
   onSave: (p: Product) => void;
 }) {
   const [p, setP] = useState<Product>(value);
+  const [scanOpen, setScanOpen] = useState(false);
   const set = <K extends keyof Product>(k: K, v: Product[K]) =>
     setP((prev) => ({ ...prev, [k]: v }));
 
