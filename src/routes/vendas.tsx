@@ -13,8 +13,9 @@ import {
   type SaleItem,
 } from "@/lib/storage";
 import { brl, fmtDateTime, todayISO, uid } from "@/lib/format";
-import { Plus, X, Trash2, Share2, Download } from "lucide-react";
+import { Plus, X, Trash2, Share2, Download, ScanLine, Search } from "lucide-react";
 import { toast } from "sonner";
+import { BarcodeScanner } from "@/components/BarcodeScanner";
 import {
   receiptPdfBlob,
   receiptPngBlob,
@@ -34,6 +35,19 @@ function Vendas() {
   const [config] = useConfig();
   const [open, setOpen] = useState(false);
   const [receiptFor, setReceiptFor] = useState<Sale | null>(null);
+  const [q, setQ] = useState("");
+
+  const filteredSales = useMemo(() => {
+    const qn = q.trim().toLowerCase();
+    if (!qn) return sales;
+    return sales.filter((s) => {
+      if ((s.customerName || "").toLowerCase().includes(qn)) return true;
+      if (s.items.some((i) => i.name.toLowerCase().includes(qn))) return true;
+      if ((s.couponCode || "").toLowerCase().includes(qn)) return true;
+      if ((s.payment || "").toLowerCase().includes(qn)) return true;
+      return false;
+    });
+  }, [sales, q]);
 
   const finalize = (draft: Sale) => {
     setProducts((prev) =>
