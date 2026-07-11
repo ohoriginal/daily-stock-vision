@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import {
   useServices,
@@ -18,6 +18,7 @@ import {
   Share2,
   Wrench,
   Camera,
+  Search,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -70,6 +71,25 @@ function Servicos() {
   const [config] = useConfig();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Service | null>(null);
+  const [q, setQ] = useState("");
+  const [filterStatus, setFilterStatus] = useState<"todos" | Service["status"]>(
+    "todos",
+  );
+
+  const filtered = useMemo(() => {
+    const qn = q.trim().toLowerCase();
+    return services.filter((s) => {
+      if (filterStatus !== "todos" && s.status !== filterStatus) return false;
+      if (!qn) return true;
+      return (
+        s.work.toLowerCase().includes(qn) ||
+        s.customerName.toLowerCase().includes(qn) ||
+        (s.technician || "").toLowerCase().includes(qn) ||
+        (s.customerPhone || "").toLowerCase().includes(qn) ||
+        (s.details || "").toLowerCase().includes(qn)
+      );
+    });
+  }, [services, q, filterStatus]);
 
   const openNew = () => {
     const now = new Date();
