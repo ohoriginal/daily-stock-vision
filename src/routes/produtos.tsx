@@ -120,7 +120,7 @@ function Produtos() {
         }
       />
 
-      <div className="mb-4 grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_auto_auto]">
+      <div className="mb-3 grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
         <div className="relative">
           <Search
             size={16}
@@ -129,10 +129,19 @@ function Produtos() {
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Buscar por nome..."
+            placeholder="Buscar por nome, categoria ou código..."
             className="w-full rounded-xl border border-border bg-card py-2 pl-9 pr-3 text-sm outline-none focus:border-[color:var(--gold)]"
           />
         </div>
+        <button
+          onClick={() => setScanning(true)}
+          className="inline-flex items-center justify-center gap-2 rounded-xl border border-[color:var(--gold)]/60 bg-card px-3 py-2 text-sm font-semibold"
+          style={{ color: "var(--gold)" }}
+        >
+          <ScanLine size={16} /> Escanear
+        </button>
+      </div>
+      <div className="mb-4 grid grid-cols-3 gap-2">
         <select
           value={cat}
           onChange={(e) => setCat(e.target.value)}
@@ -144,14 +153,27 @@ function Produtos() {
           ))}
         </select>
         <select
+          value={sort}
+          onChange={(e) => setSort(e.target.value as typeof sort)}
+          className="rounded-xl border border-border bg-card px-3 py-2 text-sm"
+        >
+          <option value="nome">Ordem: Nome</option>
+          <option value="preco-asc">Preço: menor → maior</option>
+          <option value="preco-desc">Preço: maior → menor</option>
+        </select>
+        <select
           value={status}
-          onChange={(e) => setStatus(e.target.value as any)}
+          onChange={(e) => setStatus(e.target.value as "todos" | "alerta")}
           className="rounded-xl border border-border bg-card px-3 py-2 text-sm"
         >
           <option value="todos">Todos</option>
-          <option value="alerta">Somente em alerta</option>
+          <option value="alerta">Em alerta</option>
         </select>
       </div>
+
+      {scanning && (
+        <BarcodeScanner onDetected={onScan} onClose={() => setScanning(false)} />
+      )}
 
       {filtered.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
