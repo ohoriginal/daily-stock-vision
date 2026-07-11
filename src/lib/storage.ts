@@ -12,6 +12,7 @@ export type Product = {
   photo?: string; // dataURL
   active?: boolean; // show in catalog
   description?: string;
+  barcode?: string;
   createdAt: string;
 };
 
