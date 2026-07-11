@@ -329,6 +329,24 @@ function ProductModal({
           <Field label="Categoria">
             <input value={p.category} onChange={(e) => set("category", e.target.value)} className={inputCls} placeholder="Ex: Capinhas, Cabos..." />
           </Field>
+          <Field label="Código de barras (opcional)">
+            <div className="flex gap-2">
+              <input
+                value={p.barcode || ""}
+                onChange={(e) => set("barcode", e.target.value)}
+                placeholder="Escaneie ou digite"
+                className={inputCls}
+              />
+              <button
+                type="button"
+                onClick={() => setScanOpen(true)}
+                className="inline-flex items-center gap-1 rounded-xl border border-[color:var(--gold)]/60 px-3 text-xs font-semibold"
+                style={{ color: "var(--gold)" }}
+              >
+                <ScanLine size={14} /> Ler
+              </button>
+            </div>
+          </Field>
           <Field label="Descrição (para o catálogo)">
             <textarea value={p.description || ""} onChange={(e) => set("description", e.target.value)} rows={2} className={inputCls} />
           </Field>
