@@ -125,8 +125,217 @@ function read<T>(key: string, fallback: T): T {
 
 function write<T>(key: string, value: T) {
   if (typeof window === "undefined") return;
-  window.localStorage.setItem(key, JSON.stringify(value));
-  window.dispatchEvent(new CustomEvent("mm-store", { detail: { key } }));
+  try {
+    window.localStorage.setItem(key, JSON.stringify(value));
+    window.dispatchEvent(new CustomEvent("mm-store", { detail: { key } }));
+  } catch {
+    window.dispatchEvent(new CustomEvent("mm-store", { detail: { key } }));
+  }
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+function str(value: unknown, fallback = "") {
+  return typeof value === "string" ? value : fallback;
+}
+
+function num(value: unknown, fallback = 0) {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : fallback;
+}
+
+function bool(value: unknown, fallback = false) {
+  return typeof value === "boolean" ? value : fallback;
+}
+
+function list(value: unknown): unknown[] {
+  return Array.isArray(value) ? value : [];
+}
+
+function normalizeProduct(value: unknown): Product | null {
+  if (!isRecord(value)) return null;
+  const id = str(value.id, uidFallback());
+  const name = str(value.name).trim();
+  if (!id || !name) return null;
+  return {
+    id,
+    name,
+    category: str(value.category),
+    cost: num(value.cost),
+    price: num(value.price),
+    stock: num(value.stock),
+    ideal: num(value.ideal, 10),
+    alertPct: num(value.alertPct, 15),
+    photo: typeof value.photo === "string" ? value.photo : undefined,
+    active: typeof value.active === "boolean" ? value.active : true,
+    description: typeof value.description === "string" ? value.description : undefined,
+    barcode: typeof value.barcode === "string" ? value.barcode : undefined,
+    createdAt: str(value.createdAt, new Date().toISOString()),
+  };
+}
+
+function normalizeSaleItem(value: unknown): SaleItem | null {
+  if (!isRecord(value)) return null;
+  const productId = str(value.productId);
+  const name = str(value.name).trim();
+  if (!productId || !name) return null;
+  return {
+    productId,
+    name,
+    qty: Math.max(0, num(value.qty)),
+    price: num(value.price),
+    cost: num(value.cost),
+  };
+}
+
+function normalizePurchaseItem(value: unknown): PurchaseItem | null {
+  if (!isRecord(value)) return null;
+  const productId = str(value.productId);
+  const name = str(value.name).trim();
+  if (!productId || !name) return null;
+  return {
+    productId,
+    name,
+    qty: Math.max(0, num(value.qty)),
+    cost: num(value.cost),
+  };
+}
+
+function normalizeSale(value: unknown): Sale | null {
+  if (!isRecord(value)) return null;
+  const items = list(value.items).map(normalizeSaleItem).filter((item) => item !== null);
+  const id = str(value.id, uidFallback());
+  const total = num(value.total);
+  const payment = ["dinheiro", "pix", "credito", "debito", "outro"].includes(str(value.payment))
+    ? (str(value.payment) as Sale["payment"])
+    : "outro";
+  return {
+    id,
+    date: str(value.date, new Date().toISOString()),
+    customerId: typeof value.customerId === "string" ? value.customerId : undefined,
+    customerName: typeof value.customerName === "string" ? value.customerName : undefined,
+    items,
+    subtotal: typeof value.subtotal === "number" ? value.subtotal : undefined,
+    discount: typeof value.discount === "number" ? value.discount : undefined,
+    couponCode: typeof value.couponCode === "string" ? value.couponCode : undefined,
+    total,
+    cost: num(value.cost),
+    profit: num(value.profit, total - num(value.cost)),
+    payment,
+    notes: typeof value.notes === "string" ? value.notes : undefined,
+  };
+}
+
+function normalizePurchase(value: unknown): Purchase | null {
+  if (!isRecord(value)) return null;
+  const items = list(value.items).map(normalizePurchaseItem).filter((item) => item !== null);
+  return {
+    id: str(value.id, uidFallback()),
+    date: str(value.date, new Date().toISOString()),
+    supplier: typeof value.supplier === "string" ? value.supplier : undefined,
+    items,
+    total: num(value.total, items.reduce((sum, item) => sum + item.qty * item.cost, 0)),
+    notes: typeof value.notes === "string" ? value.notes : undefined,
+  };
+}
+
+function normalizeCustomer(value: unknown): Customer | null {
+  if (!isRecord(value)) return null;
+  const name = str(value.name).trim();
+  if (!name) return null;
+  return {
+    id: str(value.id, uidFallback()),
+    name,
+    phone: typeof value.phone === "string" ? value.phone : undefined,
+    notes: typeof value.notes === "string" ? value.notes : undefined,
+    createdAt: str(value.createdAt, new Date().toISOString()),
+  };
+}
+
+function normalizeService(value: unknown): Service | null {
+  if (!isRecord(value)) return null;
+  const status = ["aberta", "andamento", "concluida", "entregue"].includes(str(value.status))
+    ? (str(value.status) as Service["status"])
+    : "aberta";
+  return {
+    id: str(value.id, uidFallback()),
+    date: str(value.date, new Date().toISOString()),
+    technician: str(value.technician),
+    work: str(value.work),
+    customerName: str(value.customerName),
+    customerPhone: str(value.customerPhone),
+    details: str(value.details),
+    photos: list(value.photos).filter((photo): photo is string => typeof photo === "string").slice(0, 6),
+    deadline: str(value.deadline, new Date().toISOString().slice(0, 10)),
+    price: num(value.price),
+    discount: num(value.discount),
+    couponCode: typeof value.couponCode === "string" ? value.couponCode : undefined,
+    status,
+  };
+}
+
+function normalizePromotion(value: unknown): Promotion | null {
+  if (!isRecord(value)) return null;
+  const keyword = str(value.keyword).trim().toUpperCase();
+  if (!keyword) return null;
+  return {
+    id: str(value.id, uidFallback()),
+    keyword,
+    type: str(value.type) === "fixo" ? "fixo" : "percent",
+    value: num(value.value),
+    active: bool(value.active, true),
+    minValue: typeof value.minValue === "number" ? value.minValue : undefined,
+    createdAt: str(value.createdAt, new Date().toISOString()),
+  };
+}
+
+function uidFallback() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+}
+
+function sanitizeStoreValue(name: StoreKey, value: unknown, fallback: unknown): unknown {
+  switch (name) {
+    case "products":
+      return list(value).map(normalizeProduct).filter((item) => item !== null);
+    case "sales":
+      return list(value).map(normalizeSale).filter((item) => item !== null);
+    case "purchases":
+      return list(value).map(normalizePurchase).filter((item) => item !== null);
+    case "customers":
+      return list(value).map(normalizeCustomer).filter((item) => item !== null);
+    case "services":
+      return list(value).map(normalizeService).filter((item) => item !== null);
+    case "promotions":
+      return list(value).map(normalizePromotion).filter((item) => item !== null);
+    case "config":
+      return isRecord(value)
+        ? {
+            ...defaultConfig,
+            name: str(value.name, defaultConfig.name),
+            cnpj: str(value.cnpj),
+            phone: str(value.phone),
+            address: str(value.address),
+            taxRatePct: num(value.taxRatePct, defaultConfig.taxRatePct),
+          }
+        : fallback;
+    case "theme":
+      return value === "light" || value === "dark" ? value : fallback;
+    default:
+      return fallback;
+  }
+}
+
+function readStore<T>(name: StoreKey, fallback: T): T {
+  if (typeof window === "undefined") return fallback;
+  try {
+    const raw = window.localStorage.getItem(KEYS[name]);
+    if (!raw) return fallback;
+    return sanitizeStoreValue(name, JSON.parse(raw), fallback) as T;
+  } catch {
+    return fallback;
+  }
 }
 
 export function useStore<T>(name: StoreKey, fallback: T) {
@@ -135,14 +344,14 @@ export function useStore<T>(name: StoreKey, fallback: T) {
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    setValue(read<T>(key, fallback));
+    setValue(readStore<T>(name, fallback));
     setHydrated(true);
     const onChange = (e: Event) => {
       const ce = e as CustomEvent<{ key: string }>;
-      if (ce.detail?.key === key) setValue(read<T>(key, fallback));
+      if (ce.detail?.key === key) setValue(readStore<T>(name, fallback));
     };
     const onStorage = (e: StorageEvent) => {
-      if (e.key === key) setValue(read<T>(key, fallback));
+      if (e.key === key) setValue(readStore<T>(name, fallback));
     };
     window.addEventListener("mm-store", onChange);
     window.addEventListener("storage", onStorage);
@@ -151,7 +360,7 @@ export function useStore<T>(name: StoreKey, fallback: T) {
       window.removeEventListener("storage", onStorage);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key]);
+  }, [key, name]);
 
   const set = useCallback(
     (next: T | ((prev: T) => T)) => {
@@ -281,13 +490,13 @@ export function importBackup(file: File): Promise<void> {
     reader.onload = () => {
       try {
         const data = JSON.parse(String(reader.result));
-        if (data.products) write(KEYS.products, data.products);
-        if (data.sales) write(KEYS.sales, data.sales);
-        if (data.purchases) write(KEYS.purchases, data.purchases);
-        if (data.customers) write(KEYS.customers, data.customers);
-        if (data.services) write(KEYS.services, data.services);
-        if (data.promotions) write(KEYS.promotions, data.promotions);
-        if (data.config) write(KEYS.config, data.config);
+        if (data.products) write(KEYS.products, sanitizeStoreValue("products", data.products, []));
+        if (data.sales) write(KEYS.sales, sanitizeStoreValue("sales", data.sales, []));
+        if (data.purchases) write(KEYS.purchases, sanitizeStoreValue("purchases", data.purchases, []));
+        if (data.customers) write(KEYS.customers, sanitizeStoreValue("customers", data.customers, []));
+        if (data.services) write(KEYS.services, sanitizeStoreValue("services", data.services, []));
+        if (data.promotions) write(KEYS.promotions, sanitizeStoreValue("promotions", data.promotions, []));
+        if (data.config) write(KEYS.config, sanitizeStoreValue("config", data.config, defaultConfig));
         resolve();
       } catch (e) {
         reject(e);
@@ -322,7 +531,8 @@ export async function fileToResizedDataURL(
   const canvas = document.createElement("canvas");
   canvas.width = w;
   canvas.height = h;
-  const ctx = canvas.getContext("2d")!;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("canvas context unavailable");
   ctx.fillStyle = "#fff";
   ctx.fillRect(0, 0, w, h);
   ctx.drawImage(img, 0, 0, w, h);

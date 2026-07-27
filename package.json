@@ -11,8 +11,8 @@
     "preview": "vite preview",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "electron:pack:win": "electron-packager . STOKMASTER --platform=win32 --arch=x64 --out=electron-release --overwrite --ignore=node_modules --ignore=^/src --ignore=^/public --ignore=^/dist --ignore=^/electron-release --ignore=^/\\.lovable",
-    "electron:pack:linux": "electron-packager . STOKMASTER --platform=linux --arch=x64 --out=electron-release --overwrite --ignore=node_modules --ignore=^/src --ignore=^/public --ignore=^/dist --ignore=^/electron-release --ignore=^/\\.lovable"
+    "electron:pack:win": "vite build && electron-packager . STOKMASTER --platform=win32 --arch=x64 --out=electron-release --overwrite --ignore=node_modules --ignore=^/src --ignore=^/public --ignore=^/electron-release --ignore=^/\\.lovable",
+    "electron:pack:linux": "vite build && electron-packager . STOKMASTER --platform=linux --arch=x64 --out=electron-release --overwrite --ignore=node_modules --ignore=^/src --ignore=^/public --ignore=^/electron-release --ignore=^/\\.lovable"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
