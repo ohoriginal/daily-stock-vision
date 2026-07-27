@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { AppShell, PageHeader } from "@/components/AppShell";
+import { pageHead } from "@/lib/seo";
 import {
   useProducts,
   usePurchases,
@@ -13,14 +14,22 @@ import { toast } from "sonner";
 import { BarcodeScanner } from "@/components/BarcodeScanner";
 
 export const Route = createFileRoute("/compras")({
+  head: () =>
+    pageHead(
+      "Compras — STOKMASTER",
+      "Registre compras offline, atualize estoque automaticamente e adicione produtos por código de barras.",
+    ),
   component: Compras,
 });
 
+const inputCls = "w-full rounded-xl border border-border bg-background px-3 py-2 text-sm outline-none focus:border-[color:var(--gold)]";
+
 function Compras() {
-  const [purchases, setPurchases] = usePurchases();
-  const [products, setProducts] = useProducts();
+  const [purchases, setPurchases, purchasesHydrated] = usePurchases();
+  const [products, setProducts, productsHydrated] = useProducts();
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
+  const ready = purchasesHydrated && productsHydrated;
 
   const filtered = useMemo(() => {
     const qn = q.trim().toLowerCase();
@@ -50,7 +59,7 @@ function Compras() {
     <AppShell>
       <PageHeader
         title="Compras"
-        subtitle={`${purchases.length} compra(s) registrada(s)`}
+        subtitle={ready ? `${purchases.length} compra(s) registrada(s)` : "Carregando dados locais..."}
         action={
           <button onClick={() => setOpen(true)} className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground">
             <Plus size={16} /> Nova compra
@@ -58,7 +67,7 @@ function Compras() {
         }
       />
 
-      {purchases.length > 0 && (
+      {ready && purchases.length > 0 && (
         <div className="relative mb-3">
           <Search
             size={16}
@@ -73,7 +82,11 @@ function Compras() {
         </div>
       )}
 
-      {purchases.length === 0 ? (
+      {!ready ? (
+        <div className="rounded-2xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
+          Carregando compras salvas neste aparelho...
+        </div>
+      ) : purchases.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
           Nenhuma compra ainda.
         </div>
@@ -223,5 +236,3 @@ function PurchaseModal({
     </div>
   );
 }
-
-const inputCls = "w-full rounded-xl border border-border bg-background px-3 py-2 text-sm outline-none focus:border-[color:var(--gold)]";

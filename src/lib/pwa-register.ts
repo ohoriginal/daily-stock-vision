@@ -12,6 +12,10 @@ function shouldSkip(): boolean {
     return true;
   }
   const host = window.location.hostname;
+  const protocol = window.location.protocol;
+  const localHttp =
+    protocol === "http:" && (host === "localhost" || host === "127.0.0.1");
+  if (protocol !== "https:" && !localHttp) return true;
   const badHost =
     host.startsWith("id-preview--") ||
     host.startsWith("preview--") ||
@@ -45,8 +49,13 @@ export function registerPWA() {
   }
   if (!("serviceWorker" in navigator)) return;
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register(SW_PATH, { scope: "/" }).catch(() => {
-      /* ignore */
-    });
+    navigator.serviceWorker
+      .register(SW_PATH, { scope: "/" })
+      .then((registration) => {
+        void registration.update();
+      })
+      .catch(() => {
+        /* ignore */
+      });
   });
 }

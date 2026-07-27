@@ -1,13 +1,14 @@
 const { app, BrowserWindow, shell, Menu } = require("electron");
 const path = require("path");
+const fs = require("fs");
 
-// STOKMASTER runs as a TanStack Start SSR app. We load the published URL,
-// and the PWA service worker caches the full app-shell on first launch — from
-// then on it works fully offline. localStorage persists in the Electron
-// userData folder (%APPDATA%/STOKMASTER on Windows), so all business data
-// stays on the local machine.
-const APP_URL = process.env.STOKMASTER_URL || "https://daily-stock-vision.lovable.app";
+// STOKMASTER is bundled with the desktop app and opens from local files,
+// so it does not depend on the published site or internet access.
 const OFFLINE_FALLBACK = path.join(__dirname, "offline.html");
+const LOCAL_APP_CANDIDATES = [
+  path.join(__dirname, "..", "dist", "index.html"),
+  path.join(__dirname, "..", "dist", "client", "index.html"),
+];
 
 app.setName("STOKMASTER");
 
@@ -30,7 +31,12 @@ function createWindow() {
   Menu.setApplicationMenu(null);
 
   const load = () => {
-    win.loadURL(APP_URL).catch(() => win.loadFile(OFFLINE_FALLBACK));
+    const localApp = LOCAL_APP_CANDIDATES.find((candidate) => fs.existsSync(candidate));
+    if (localApp) {
+      win.loadFile(localApp).catch(() => win.loadFile(OFFLINE_FALLBACK));
+      return;
+    }
+    win.loadFile(OFFLINE_FALLBACK);
   };
   load();
 

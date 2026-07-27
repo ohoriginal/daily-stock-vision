@@ -1,12 +1,18 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { AppShell, PageHeader } from "@/components/AppShell";
+import { pageHead } from "@/lib/seo";
 import { useProducts, useConfig } from "@/lib/storage";
 import { brl } from "@/lib/format";
 import { Search, Share2, MessageCircle, Phone, Pencil, Check } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/catalogo")({
+  head: () =>
+    pageHead(
+      "Catálogo — STOKMASTER",
+      "Monte e compartilhe um catálogo de produtos com fotos, preços e pedidos pelo WhatsApp.",
+    ),
   component: Catalogo,
 });
 

@@ -1,12 +1,18 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { AppShell, PageHeader } from "@/components/AppShell";
+import { pageHead } from "@/lib/seo";
 import { useCustomers, useSales, type Customer } from "@/lib/storage";
 import { brl, fmtDate, todayISO, uid } from "@/lib/format";
 import { Plus, X, Trash2, Pencil, MessageCircle, Search } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/clientes")({
+  head: () =>
+    pageHead(
+      "Clientes — STOKMASTER",
+      "Gerencie clientes offline, histórico de compras e contatos por WhatsApp no STOKMASTER.",
+    ),
   component: Clientes,
 });
 

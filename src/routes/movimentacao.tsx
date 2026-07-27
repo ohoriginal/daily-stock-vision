@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { AppShell, PageHeader } from "@/components/AppShell";
+import { pageHead } from "@/lib/seo";
 import { useSales, usePurchases } from "@/lib/storage";
 import { brl } from "@/lib/format";
 import {
@@ -14,6 +15,11 @@ import {
 } from "recharts";
 
 export const Route = createFileRoute("/movimentacao")({
+  head: () =>
+    pageHead(
+      "Fluxo de caixa — STOKMASTER",
+      "Acompanhe faturamento, lucro, pagamentos e saldo por semana, mês ou ano.",
+    ),
   component: Movimentacao,
 });
 

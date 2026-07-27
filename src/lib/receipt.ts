@@ -52,7 +52,10 @@ async function nodeToPng(node: HTMLElement): Promise<Blob> {
     useCORS: true,
   });
   return new Promise<Blob>((resolve) => {
-    canvas.toBlob((b) => resolve(b!), "image/png");
+    canvas.toBlob((blob) => {
+      if (blob) resolve(blob);
+      else resolve(new Blob([], { type: "image/png" }));
+    }, "image/png");
   });
 }
 

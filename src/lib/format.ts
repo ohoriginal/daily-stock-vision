@@ -4,11 +4,14 @@ export const brl = (n: number) =>
     currency: "BRL",
   });
 
-export const fmtDate = (iso: string) =>
-  new Date(iso).toLocaleDateString("pt-BR");
+function safeDate(iso: string) {
+  const date = new Date(iso);
+  return Number.isFinite(date.getTime()) ? date : new Date();
+}
 
-export const fmtDateTime = (iso: string) =>
-  new Date(iso).toLocaleString("pt-BR");
+export const fmtDate = (iso: string) => safeDate(iso).toLocaleDateString("pt-BR");
+
+export const fmtDateTime = (iso: string) => safeDate(iso).toLocaleString("pt-BR");
 
 export const todayISO = () => new Date().toISOString();
 

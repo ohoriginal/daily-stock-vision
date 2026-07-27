@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { AppShell, PageHeader } from "@/components/AppShell";
+import { pageHead } from "@/lib/seo";
 import {
   useServices,
   usePromotions,
@@ -23,6 +24,11 @@ import {
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/servicos")({
+  head: () =>
+    pageHead(
+      "Serviços — STOKMASTER",
+      "Controle ordens de serviço com fotos, técnico, prazo, status, descontos e envio por WhatsApp.",
+    ),
   component: Servicos,
 });
 
