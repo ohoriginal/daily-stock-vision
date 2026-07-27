@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { AppShell, PageHeader } from "@/components/AppShell";
+import { pageHead } from "@/lib/seo";
 import {
   useProducts,
   usePurchases,
@@ -13,6 +14,11 @@ import { toast } from "sonner";
 import { BarcodeScanner } from "@/components/BarcodeScanner";
 
 export const Route = createFileRoute("/compras")({
+  head: () =>
+    pageHead(
+      "Compras — STOKMASTER",
+      "Registre compras offline, atualize estoque automaticamente e adicione produtos por código de barras.",
+    ),
   component: Compras,
 });
 

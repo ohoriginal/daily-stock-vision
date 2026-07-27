@@ -1,12 +1,18 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { AppShell, PageHeader } from "@/components/AppShell";
+import { pageHead } from "@/lib/seo";
 import { usePromotions, type Promotion } from "@/lib/storage";
 import { uid, todayISO, brl } from "@/lib/format";
 import { Plus, Trash2, X, Percent, Search } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/promocoes")({
+  head: () =>
+    pageHead(
+      "Promoções — STOKMASTER",
+      "Crie cupons por palavra-chave para descontos em vendas e ordens de serviço.",
+    ),
   component: Promocoes,
 });
 

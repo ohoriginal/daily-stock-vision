@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { AppShell, PageHeader } from "@/components/AppShell";
+import { pageHead } from "@/lib/seo";
 import {
   useProducts,
   useSales,
@@ -24,6 +25,11 @@ import {
 } from "@/lib/receipt";
 
 export const Route = createFileRoute("/vendas")({
+  head: () =>
+    pageHead(
+      "Vendas — STOKMASTER",
+      "Registre vendas, aplique descontos, leia códigos de barras e gere recibos para WhatsApp.",
+    ),
   component: Vendas,
 });
 

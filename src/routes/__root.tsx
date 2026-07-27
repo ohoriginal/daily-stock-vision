@@ -97,8 +97,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:title", content: "STOKMASTER — Controle de estoque" },
       { name: "twitter:description", content: "Sistema completo de controle de estoque, vendas, compras e relatórios para pequenos negócios. Funciona no celular e computador." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/c12b410b-18f5-432c-88e0-eaa948536aab/id-preview-c54bb216--4acb8931-f18b-43df-82fc-80e81e63f941.lovable.app-1783610622506.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/c12b410b-18f5-432c-88e0-eaa948536aab/id-preview-c54bb216--4acb8931-f18b-43df-82fc-80e81e63f941.lovable.app-1783610622506.png" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },

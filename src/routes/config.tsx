@@ -1,12 +1,18 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useRef, useState, useEffect } from "react";
 import { AppShell, PageHeader } from "@/components/AppShell";
+import { pageHead } from "@/lib/seo";
 import { useConfig, exportBackup, importBackup } from "@/lib/storage";
 import { useTheme } from "@/lib/theme";
 import { toast } from "sonner";
 import { Download, Upload, Sun, Moon } from "lucide-react";
 
 export const Route = createFileRoute("/config")({
+  head: () =>
+    pageHead(
+      "Configurações — STOKMASTER",
+      "Ajuste dados do negócio, tema visual, impostos e backup local do STOKMASTER.",
+    ),
   component: Config,
 });
 

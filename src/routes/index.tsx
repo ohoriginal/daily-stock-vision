@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { AppShell, PageHeader } from "@/components/AppShell";
+import { pageHead } from "@/lib/seo";
 import {
   useProducts,
   useSales,
@@ -12,6 +13,11 @@ import { brl } from "@/lib/format";
 import { Package, ShoppingCart, Tag, TrendingUp, AlertTriangle } from "lucide-react";
 
 export const Route = createFileRoute("/")({
+  head: () =>
+    pageHead(
+      "STOKMASTER — Painel de estoque",
+      "Resumo offline de estoque, vendas, compras, lucro mensal e alertas de produtos.",
+    ),
   component: Dashboard,
 });
 

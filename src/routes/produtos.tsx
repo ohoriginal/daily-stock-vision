@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { AppShell, PageHeader } from "@/components/AppShell";
+import { pageHead } from "@/lib/seo";
 import {
   useProducts,
   stockLevel,
@@ -15,6 +16,11 @@ import { toast } from "sonner";
 import { BarcodeScanner } from "@/components/BarcodeScanner";
 
 export const Route = createFileRoute("/produtos")({
+  head: () =>
+    pageHead(
+      "Produtos — STOKMASTER",
+      "Cadastre produtos, fotos, preços, estoque ideal, alertas e códigos de barras no STOKMASTER.",
+    ),
   component: Produtos,
 });
 

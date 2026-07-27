@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { AppShell, PageHeader } from "@/components/AppShell";
+import { pageHead } from "@/lib/seo";
 import { useSales, usePurchases, useConfig } from "@/lib/storage";
 import { brl, fmtDate } from "@/lib/format";
 import { exportDetailedPdf, exportCsvXlsx, exportLivroCaixa } from "@/lib/reports";
@@ -8,6 +9,11 @@ import { FileText, Sheet, BookOpen } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/relatorios")({
+  head: () =>
+    pageHead(
+      "Relatórios — STOKMASTER",
+      "Gere relatórios em PDF, planilha e livro caixa para controle financeiro e contabilidade.",
+    ),
   component: Relatorios,
 });
 
