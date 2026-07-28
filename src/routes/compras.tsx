@@ -42,6 +42,19 @@ function Compras() {
     );
   }, [purchases, q]);
 
+  const removePurchase = (purchase: Purchase) => {
+    if (!confirm("Apagar esta compra? O estoque adicionado por ela será revertido.")) return;
+    setProducts((prev) =>
+      prev.map((p) => {
+        const it = purchase.items.find((i) => i.productId === p.id);
+        if (!it) return p;
+        return { ...p, stock: Math.max(0, p.stock - it.qty) };
+      }),
+    );
+    setPurchases((prev) => prev.filter((x) => x.id !== purchase.id));
+    toast.success("Compra apagada");
+  };
+
   const finalize = (draft: Purchase) => {
     setProducts((prev) =>
       prev.map((p) => {
@@ -97,12 +110,19 @@ function Compras() {
       ) : (
         <div className="space-y-2">
           {filtered.map((p) => (
-            <div key={p.id} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-2xl border border-border bg-card p-3">
+            <div key={p.id} className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 rounded-2xl border border-border bg-card p-3">
               <div className="min-w-0">
                 <div className="truncate font-semibold">{p.supplier || "Fornecedor não informado"}</div>
                 <div className="text-xs text-muted-foreground">{fmtDateTime(p.date)} · {p.items.length} item(s)</div>
               </div>
               <div className="font-black" style={{ color: "var(--gold)" }}>{brl(p.total)}</div>
+              <button
+                onClick={() => removePurchase(p)}
+                aria-label="Apagar compra"
+                className="grid h-9 w-9 place-items-center rounded-lg text-[color:var(--stock-crit)] hover:bg-accent"
+              >
+                <Trash2 size={16} />
+              </button>
             </div>
           ))}
         </div>
