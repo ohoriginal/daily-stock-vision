@@ -281,12 +281,21 @@ function Servicos() {
                 {s.photos.length > 0 && (
                   <div className="mt-2 flex gap-1 overflow-x-auto">
                     {s.photos.map((src, i) => (
-                      <img
+                      <button
                         key={i}
-                        src={src}
-                        alt=""
-                        className="h-14 w-14 shrink-0 rounded-lg object-cover"
-                      />
+                        type="button"
+                        onClick={() =>
+                          setViewer({ photos: s.photos, index: i, title: s.work })
+                        }
+                        className="shrink-0"
+                        aria-label={`Abrir foto ${i + 1}`}
+                      >
+                        <img
+                          src={src}
+                          alt={`Foto ${i + 1} da OS ${s.work}`}
+                          className="h-14 w-14 rounded-lg object-cover"
+                        />
+                      </button>
                     ))}
                   </div>
                 )}
@@ -295,8 +304,18 @@ function Servicos() {
                     onClick={() => share(s)}
                     className="flex-1 inline-flex items-center justify-center gap-1 rounded-lg bg-[#25D366] px-2 py-1.5 text-xs font-semibold text-white"
                   >
-                    <Share2 size={14} /> WhatsApp
+                    <Share2 size={14} /> WhatsApp + fotos
                   </button>
+                  {s.photos.length > 0 && (
+                    <button
+                      onClick={() =>
+                        setViewer({ photos: s.photos, index: 0, title: s.work })
+                      }
+                      className="inline-flex items-center gap-1 rounded-lg border border-border px-3 text-xs"
+                    >
+                      <Images size={14} /> Fotos
+                    </button>
+                  )}
                   <button
                     onClick={() => {
                       setEditing(s);
@@ -313,6 +332,7 @@ function Servicos() {
                     <Trash2 size={14} />
                   </button>
                 </div>
+
               </div>
             );
           })}
