@@ -375,6 +375,7 @@ function ServiceModal({
   onSave: (s: Service) => void;
 }) {
   const [s, setS] = useState<Service>(value);
+  const [viewIdx, setViewIdx] = useState<number | null>(null);
   const set = <K extends keyof Service>(k: K, v: Service[K]) =>
     setS((prev) => ({ ...prev, [k]: v }));
 
