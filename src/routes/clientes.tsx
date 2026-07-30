@@ -191,4 +191,127 @@ function Clientes() {
   );
 }
 
+function warrantyInfo(sale: Sale) {
+  const days = sale.warrantyDays || 0;
+  if (!days) return { days: 0, label: "Sem garantia", until: "", active: false, left: 0 };
+  const start = new Date(sale.date);
+  const until = new Date(start.getTime() + days * 24 * 60 * 60 * 1000);
+  const left = Math.ceil((until.getTime() - Date.now()) / (24 * 60 * 60 * 1000));
+  return {
+    days,
+    until: until.toLocaleDateString("pt-BR"),
+    active: left > 0,
+    left,
+    label: left > 0 ? `Em garantia · ${left} dia(s)` : "Garantia vencida",
+  };
+}
+
+function SaleCard({
+  sale,
+  phone,
+  onWarrantyChange,
+}: {
+  sale: Sale;
+  phone?: string;
+  onWarrantyChange: (days: number) => void;
+}) {
+  const w = warrantyInfo(sale);
+  const [openW, setOpenW] = useState(false);
+
+  const sendWarranty = () => {
+    const lines = [
+      `*Garantia da compra*`,
+      `Data: ${fmtDateTime(sale.date)}`,
+      ...sale.items.map((i) => `• ${i.qty}x ${i.name}`),
+      `Total: ${brl(sale.total)}`,
+      w.days
+        ? `Garantia: ${w.days} dias (até ${w.until}) — ${w.active ? "ATIVA" : "VENCIDA"}`
+        : "Garantia: não informada",
+    ];
+    const url = phone
+      ? `https://wa.me/${phone.replace(/\D/g, "")}?text=${encodeURIComponent(lines.join("\n"))}`
+      : `https://wa.me/?text=${encodeURIComponent(lines.join("\n"))}`;
+    window.open(url, "_blank");
+  };
+
+  return (
+    <div className="rounded-xl border border-border p-3">
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <div className="text-xs font-semibold">{fmtDateTime(sale.date)}</div>
+          <div className="text-[11px] text-muted-foreground">
+            {sale.payment}
+            {sale.couponCode ? ` · cupom ${sale.couponCode}` : ""}
+            {sale.discount ? ` · desc ${brl(sale.discount)}` : ""}
+          </div>
+        </div>
+        <div className="font-black" style={{ color: "var(--gold)" }}>{brl(sale.total)}</div>
+      </div>
+
+      <ul className="mt-2 space-y-0.5 text-xs">
+        {sale.items.map((i) => (
+          <li key={i.productId} className="flex justify-between gap-2">
+            <span className="truncate">{i.qty}x {i.name}</span>
+            <span className="shrink-0 text-muted-foreground">{brl(i.qty * i.price)}</span>
+          </li>
+        ))}
+      </ul>
+
+      <div className="mt-2 flex flex-wrap items-center gap-2">
+        <span
+          className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
+          style={{
+            borderColor: w.days ? (w.active ? "var(--stock-ok)" : "var(--stock-crit)") : undefined,
+            color: w.days ? (w.active ? "var(--stock-ok)" : "var(--stock-crit)") : undefined,
+          }}
+        >
+          <ShieldCheck size={11} /> {w.label}
+        </span>
+        {w.days > 0 && (
+          <span className="text-[11px] text-muted-foreground">até {w.until}</span>
+        )}
+        <button
+          onClick={() => setOpenW((v) => !v)}
+          className="rounded-lg border border-border px-2 py-0.5 text-[11px]"
+        >
+          {openW ? "Fechar" : "Editar garantia"}
+        </button>
+        <button
+          onClick={sendWarranty}
+          className="rounded-lg border border-border px-2 py-0.5 text-[11px] text-[#25D366]"
+        >
+          Enviar por WhatsApp
+        </button>
+      </div>
+
+      {openW && (
+        <div className="mt-2 grid grid-cols-[minmax(0,1fr)_auto] gap-2">
+          <input
+            type="number"
+            min={0}
+            defaultValue={w.days}
+            onBlur={(e) => onWarrantyChange(Number(e.target.value))}
+            placeholder="Dias de garantia"
+            className="w-full rounded-lg border border-border bg-background px-2 py-1 text-xs outline-none"
+          />
+          <div className="flex gap-1">
+            {[30, 90, 180, 365].map((d) => (
+              <button
+                key={d}
+                onClick={() => {
+                  onWarrantyChange(d);
+                  toast.success(`Garantia de ${d} dias`);
+                }}
+                className="rounded-lg border border-border px-2 text-[11px]"
+              >
+                {d}d
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 const inputCls = "w-full rounded-xl border border-border bg-background px-3 py-2 text-sm outline-none focus:border-[color:var(--gold)]";
