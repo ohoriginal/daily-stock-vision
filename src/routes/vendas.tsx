@@ -190,20 +190,15 @@ function SaleModal({
     });
   };
 
-  const addItem = () => {
-    const p = products.find((x) => x.id === pickProductId);
-    if (!p) return toast.error("Escolha um produto");
-    if (items.some((i) => i.productId === p.id)) return toast.error("Já adicionado");
+  const pick = (p: (typeof products)[number]) => {
     addProduct(p);
-    setPickProductId("");
+    toast.success(`+1 ${p.name}`);
   };
 
   const onScan = (code: string) => {
     const p = products.find((x) => (x.barcode || "") === code);
-    setScanning(false);
     if (!p) return toast.error("Produto com esse código não encontrado");
-    addProduct(p);
-    toast.success(`+1 ${p.name}`);
+    pick(p);
   };
 
   const updateQty = (id: string, qty: number) =>
