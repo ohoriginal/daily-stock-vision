@@ -9,9 +9,9 @@ import {
   type PurchaseItem,
 } from "@/lib/storage";
 import { brl, fmtDateTime, todayISO, uid } from "@/lib/format";
-import { Plus, X, Trash2, Search, ScanLine } from "lucide-react";
+import { Plus, X, Trash2, Search } from "lucide-react";
 import { toast } from "sonner";
-import { BarcodeScanner } from "@/components/BarcodeScanner";
+import { ProductPicker } from "@/components/ProductPicker";
 
 export const Route = createFileRoute("/compras")({
   head: () =>
@@ -145,8 +145,6 @@ function PurchaseModal({
   const [items, setItems] = useState<PurchaseItem[]>([]);
   const [supplier, setSupplier] = useState("");
   const [notes, setNotes] = useState("");
-  const [pickId, setPickId] = useState("");
-  const [scanning, setScanning] = useState(false);
 
   const addProduct = (p: (typeof products)[number]) => {
     setItems((prev) => {
@@ -157,23 +155,15 @@ function PurchaseModal({
         );
       return [...prev, { productId: p.id, name: p.name, qty: 1, cost: p.cost }];
     });
-  };
-
-  const addItem = () => {
-    const p = products.find((x) => x.id === pickId);
-    if (!p) return toast.error("Escolha um produto");
-    if (items.some((i) => i.productId === p.id)) return toast.error("Já adicionado");
-    addProduct(p);
-    setPickId("");
+    toast.success(`+1 ${p.name}`);
   };
 
   const onScan = (code: string) => {
-    setScanning(false);
     const p = products.find((x) => (x.barcode || "") === code);
     if (!p) return toast.error("Produto com esse código não encontrado");
     addProduct(p);
-    toast.success(`+1 ${p.name}`);
   };
+
 
   const total = items.reduce((a, b) => a + b.qty * b.cost, 0);
 
