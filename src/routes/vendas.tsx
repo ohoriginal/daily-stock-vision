@@ -338,19 +338,34 @@ function SaleModal({
               Aplicar
             </button>
           </div>
-          <label className="block">
-            <span className="mb-1 block text-xs font-semibold text-muted-foreground">
-              Desconto manual (R$)
-            </span>
-            <input
-              type="number"
-              step="0.01"
-              min={0}
-              value={manualDiscount}
-              onChange={(e) => setManualDiscount(Number(e.target.value))}
-              className={inputCls}
-            />
-          </label>
+          <div className="grid grid-cols-2 gap-3">
+            <label className="block">
+              <span className="mb-1 block text-xs font-semibold text-muted-foreground">
+                Desconto manual (R$)
+              </span>
+              <input
+                type="number"
+                step="0.01"
+                min={0}
+                value={manualDiscount}
+                onChange={(e) => setManualDiscount(Number(e.target.value))}
+                className={inputCls}
+              />
+            </label>
+            <label className="block">
+              <span className="mb-1 block text-xs font-semibold text-muted-foreground">
+                Garantia (dias)
+              </span>
+              <input
+                type="number"
+                min={0}
+                value={warrantyDays}
+                onChange={(e) => setWarrantyDays(Number(e.target.value))}
+                className={inputCls}
+              />
+            </label>
+          </div>
+
 
           <div className="rounded-xl bg-accent p-3 text-sm">
             <div className="flex justify-between text-xs text-muted-foreground">
@@ -375,9 +390,6 @@ function SaleModal({
           <button onClick={finish} className="flex-1 rounded-xl bg-primary py-2 text-sm font-semibold text-primary-foreground">Finalizar</button>
         </div>
       </div>
-      {scanning && (
-        <BarcodeScanner onDetected={onScan} onClose={() => setScanning(false)} />
-      )}
     </div>
   );
 }
