@@ -20,8 +20,16 @@ import {
   Wrench,
   Camera,
   Search,
+  Images,
 } from "lucide-react";
 import { toast } from "sonner";
+import { ImageViewer } from "@/components/ImageViewer";
+
+async function dataUrlToFile(dataUrl: string, name: string) {
+  const res = await fetch(dataUrl);
+  const blob = await res.blob();
+  return new File([blob], name, { type: blob.type || "image/jpeg" });
+}
 
 export const Route = createFileRoute("/servicos")({
   head: () =>
