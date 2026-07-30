@@ -248,6 +248,7 @@ function SaleModal({
       total,
       cost,
       profit,
+      warrantyDays: warrantyDays > 0 ? warrantyDays : undefined,
       payment,
       notes,
       customerId: c?.id,
