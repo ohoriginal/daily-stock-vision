@@ -498,11 +498,18 @@ function ServiceModal({
               <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
                 {s.photos.map((src, i) => (
                   <div key={i} className="relative">
-                    <img
-                      src={src}
-                      alt=""
-                      className="aspect-square w-full rounded-lg object-cover"
-                    />
+                    <button
+                      type="button"
+                      onClick={() => setViewIdx(i)}
+                      className="block w-full"
+                      aria-label={`Abrir foto ${i + 1}`}
+                    >
+                      <img
+                        src={src}
+                        alt={`Foto ${i + 1}`}
+                        className="aspect-square w-full rounded-lg object-cover"
+                      />
+                    </button>
                     <button
                       type="button"
                       onClick={() => removePhoto(i)}
@@ -515,6 +522,15 @@ function ServiceModal({
                 ))}
               </div>
             )}
+            {viewIdx !== null && (
+              <ImageViewer
+                images={s.photos}
+                index={viewIdx}
+                title={s.work}
+                onClose={() => setViewIdx(null)}
+              />
+            )}
+
           </div>
 
           <div className="grid grid-cols-2 gap-3">
