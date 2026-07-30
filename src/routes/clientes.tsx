@@ -18,7 +18,7 @@ export const Route = createFileRoute("/clientes")({
 
 function Clientes() {
   const [customers, setCustomers] = useCustomers();
-  const [sales] = useSales();
+  const [sales, setSales] = useSales();
   const [editing, setEditing] = useState<Customer | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [q, setQ] = useState("");
@@ -138,17 +138,30 @@ function Clientes() {
                     {list.length === 0 ? (
                       <div className="text-xs text-muted-foreground">Sem compras.</div>
                     ) : (
-                      <ul className="space-y-1 text-xs">
-                        {list.map((s) => (
-                          <li key={s.id} className="flex justify-between">
-                            <span>{fmtDate(s.date)} · {s.items.length} item(s)</span>
-                            <span className="font-semibold">{brl(s.total)}</span>
-                          </li>
-                        ))}
-                      </ul>
+                      <div className="space-y-2">
+                        {[...list]
+                          .sort((a, b) => (a.date < b.date ? 1 : -1))
+                          .map((s) => (
+                            <SaleCard
+                              key={s.id}
+                              sale={s}
+                              phone={c.phone}
+                              onWarrantyChange={(days) =>
+                                setSales((prev) =>
+                                  prev.map((x) =>
+                                    x.id === s.id
+                                      ? { ...x, warrantyDays: days > 0 ? days : undefined }
+                                      : x,
+                                  ),
+                                )
+                              }
+                            />
+                          ))}
+                      </div>
                     )}
                   </div>
                 )}
+
               </div>
             );
           })}
