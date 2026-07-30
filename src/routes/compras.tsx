@@ -183,24 +183,19 @@ function PurchaseModal({
         <div className="space-y-3">
           <input value={supplier} onChange={(e) => setSupplier(e.target.value)} placeholder="Fornecedor (opcional)" className={inputCls} />
 
-          <div className="grid grid-cols-[minmax(0,1fr)_auto_auto] gap-2">
-            <select value={pickId} onChange={(e) => setPickId(e.target.value)} className={inputCls}>
-              <option value="">Adicionar produto...</option>
-              {products.map((p) => (
-                <option key={p.id} value={p.id}>{p.name} — custo atual {brl(p.cost)}</option>
-              ))}
-            </select>
-            <button
-              type="button"
-              onClick={() => setScanning(true)}
-              className="inline-flex items-center gap-1 rounded-xl border border-[color:var(--gold)]/60 px-3 text-xs font-semibold"
-              style={{ color: "var(--gold)" }}
-              aria-label="Escanear código"
-            >
-              <ScanLine size={14} />
-            </button>
-            <button onClick={addItem} className="rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground">+</button>
+          <div>
+            <span className="mb-1 block text-xs font-semibold text-muted-foreground">
+              Buscar produto para comprar
+            </span>
+            <ProductPicker
+              products={products}
+              onPick={addProduct}
+              onScan={onScan}
+              mode="compra"
+              placeholder="Buscar produto por nome, categoria ou código..."
+            />
           </div>
+
 
           {items.length > 0 && (
             <div className="rounded-xl border border-border">
@@ -240,9 +235,6 @@ function PurchaseModal({
           <button onClick={finish} className="flex-1 rounded-xl bg-primary py-2 text-sm font-semibold text-primary-foreground">Registrar</button>
         </div>
       </div>
-      {scanning && (
-        <BarcodeScanner onDetected={onScan} onClose={() => setScanning(false)} />
-      )}
     </div>
   );
 }
