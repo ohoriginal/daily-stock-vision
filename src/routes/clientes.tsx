@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { pageHead } from "@/lib/seo";
 import { useCustomers, useSales, type Customer, type Sale } from "@/lib/storage";
-import { brl, fmtDate, fmtDateTime, todayISO, uid } from "@/lib/format";
+import { brl, fmtDateTime, todayISO, uid } from "@/lib/format";
 import { Plus, X, Trash2, Pencil, MessageCircle, Search, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 
