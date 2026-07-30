@@ -350,6 +350,15 @@ function Servicos() {
           onSave={save}
         />
       )}
+
+      {viewer && (
+        <ImageViewer
+          images={viewer.photos}
+          index={viewer.index}
+          title={viewer.title}
+          onClose={() => setViewer(null)}
+        />
+      )}
     </AppShell>
   );
 }
