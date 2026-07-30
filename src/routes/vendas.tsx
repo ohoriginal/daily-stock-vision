@@ -272,28 +272,13 @@ function SaleModal({
             </select>
           </label>
 
-          <div className="grid grid-cols-[minmax(0,1fr)_auto_auto] gap-2">
-            <select value={pickProductId} onChange={(e) => setPickProductId(e.target.value)} className={inputCls}>
-              <option value="">Adicionar produto...</option>
-              {products.map((p) => (
-                <option key={p.id} value={p.id} disabled={p.stock <= 0}>
-                  {p.name} — {brl(p.price)} (est: {p.stock})
-                </option>
-              ))}
-            </select>
-            <button
-              type="button"
-              onClick={() => setScanning(true)}
-              className="inline-flex items-center gap-1 rounded-xl border border-[color:var(--gold)]/60 px-3 text-xs font-semibold"
-              style={{ color: "var(--gold)" }}
-              aria-label="Escanear código de barras"
-            >
-              <ScanLine size={14} />
-            </button>
-            <button onClick={addItem} className="rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground">
-              +
-            </button>
+          <div>
+            <span className="mb-1 block text-xs font-semibold text-muted-foreground">
+              Buscar produto para vender
+            </span>
+            <ProductPicker products={products} onPick={pick} onScan={onScan} mode="venda" />
           </div>
+
 
           {items.length > 0 && (
             <div className="rounded-xl border border-border">
