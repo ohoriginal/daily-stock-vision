@@ -14,9 +14,9 @@ import {
   type SaleItem,
 } from "@/lib/storage";
 import { brl, fmtDateTime, todayISO, uid } from "@/lib/format";
-import { Plus, X, Trash2, Share2, Download, ScanLine, Search } from "lucide-react";
+import { Plus, X, Trash2, Share2, Download, Search } from "lucide-react";
 import { toast } from "sonner";
-import { BarcodeScanner } from "@/components/BarcodeScanner";
+import { ProductPicker } from "@/components/ProductPicker";
 import {
   receiptPdfBlob,
   receiptPngBlob,
@@ -171,11 +171,10 @@ function SaleModal({
   const [customerId, setCustomerId] = useState<string>("");
   const [payment, setPayment] = useState<Sale["payment"]>("dinheiro");
   const [notes, setNotes] = useState("");
-  const [pickProductId, setPickProductId] = useState("");
   const [couponCode, setCouponCode] = useState("");
   const [manualDiscount, setManualDiscount] = useState(0);
   const [couponDiscount, setCouponDiscount] = useState(0);
-  const [scanning, setScanning] = useState(false);
+  const [warrantyDays, setWarrantyDays] = useState(90);
 
   const addProduct = (p: (typeof products)[number]) => {
     setItems((prev) => {
