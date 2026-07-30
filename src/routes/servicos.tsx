@@ -86,6 +86,9 @@ function Servicos() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Service | null>(null);
   const [q, setQ] = useState("");
+  const [viewer, setViewer] = useState<{ photos: string[]; index: number; title: string } | null>(
+    null,
+  );
   const [filterStatus, setFilterStatus] = useState<"todos" | Service["status"]>(
     "todos",
   );
