@@ -152,14 +152,47 @@ function Servicos() {
     setServices((prev) => prev.filter((x) => x.id !== id));
   };
 
-  const share = (s: Service) => {
+  const share = async (s: Service) => {
     const text = osText(s, config.name || "STOKMASTER");
     const phone = digits(s.customerPhone);
+
+    // 1) tenta compartilhar OS + fotos juntos (celular / apps compatíveis)
+    if (s.photos.length > 0 && typeof navigator !== "undefined" && navigator.share) {
+      try {
+        const files = await Promise.all(
+          s.photos.map((p, i) => dataUrlToFile(p, `os-${s.id}-foto-${i + 1}.jpg`)),
+        );
+        const canFiles =
+          !navigator.canShare || navigator.canShare({ files });
+        if (canFiles) {
+          await navigator.share({ text, files });
+          return;
+        }
+      } catch (e) {
+        if ((e as Error)?.name === "AbortError") return;
+      }
+    }
+
+    // 2) fallback: baixa as fotos e abre o WhatsApp com o texto da OS
+    if (s.photos.length > 0) {
+      s.photos.forEach((src, i) => {
+        const a = document.createElement("a");
+        a.href = src;
+        a.download = `os-${s.id}-foto-${i + 1}.jpg`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+      });
+      toast.message("Fotos baixadas", {
+        description: "Anexe as fotos na conversa do WhatsApp que vai abrir.",
+      });
+    }
     const url = phone
       ? `https://wa.me/${phone}?text=${encodeURIComponent(text)}`
       : `https://wa.me/?text=${encodeURIComponent(text)}`;
     window.open(url, "_blank");
   };
+
 
   return (
     <AppShell>
