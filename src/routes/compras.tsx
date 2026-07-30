@@ -9,9 +9,9 @@ import {
   type PurchaseItem,
 } from "@/lib/storage";
 import { brl, fmtDateTime, todayISO, uid } from "@/lib/format";
-import { Plus, X, Trash2, Search, ScanLine } from "lucide-react";
+import { Plus, X, Trash2, Search } from "lucide-react";
 import { toast } from "sonner";
-import { BarcodeScanner } from "@/components/BarcodeScanner";
+import { ProductPicker } from "@/components/ProductPicker";
 
 export const Route = createFileRoute("/compras")({
   head: () =>
@@ -145,8 +145,6 @@ function PurchaseModal({
   const [items, setItems] = useState<PurchaseItem[]>([]);
   const [supplier, setSupplier] = useState("");
   const [notes, setNotes] = useState("");
-  const [pickId, setPickId] = useState("");
-  const [scanning, setScanning] = useState(false);
 
   const addProduct = (p: (typeof products)[number]) => {
     setItems((prev) => {
@@ -157,23 +155,15 @@ function PurchaseModal({
         );
       return [...prev, { productId: p.id, name: p.name, qty: 1, cost: p.cost }];
     });
-  };
-
-  const addItem = () => {
-    const p = products.find((x) => x.id === pickId);
-    if (!p) return toast.error("Escolha um produto");
-    if (items.some((i) => i.productId === p.id)) return toast.error("Já adicionado");
-    addProduct(p);
-    setPickId("");
+    toast.success(`+1 ${p.name}`);
   };
 
   const onScan = (code: string) => {
-    setScanning(false);
     const p = products.find((x) => (x.barcode || "") === code);
     if (!p) return toast.error("Produto com esse código não encontrado");
     addProduct(p);
-    toast.success(`+1 ${p.name}`);
   };
+
 
   const total = items.reduce((a, b) => a + b.qty * b.cost, 0);
 
@@ -193,24 +183,19 @@ function PurchaseModal({
         <div className="space-y-3">
           <input value={supplier} onChange={(e) => setSupplier(e.target.value)} placeholder="Fornecedor (opcional)" className={inputCls} />
 
-          <div className="grid grid-cols-[minmax(0,1fr)_auto_auto] gap-2">
-            <select value={pickId} onChange={(e) => setPickId(e.target.value)} className={inputCls}>
-              <option value="">Adicionar produto...</option>
-              {products.map((p) => (
-                <option key={p.id} value={p.id}>{p.name} — custo atual {brl(p.cost)}</option>
-              ))}
-            </select>
-            <button
-              type="button"
-              onClick={() => setScanning(true)}
-              className="inline-flex items-center gap-1 rounded-xl border border-[color:var(--gold)]/60 px-3 text-xs font-semibold"
-              style={{ color: "var(--gold)" }}
-              aria-label="Escanear código"
-            >
-              <ScanLine size={14} />
-            </button>
-            <button onClick={addItem} className="rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground">+</button>
+          <div>
+            <span className="mb-1 block text-xs font-semibold text-muted-foreground">
+              Buscar produto para comprar
+            </span>
+            <ProductPicker
+              products={products}
+              onPick={addProduct}
+              onScan={onScan}
+              mode="compra"
+              placeholder="Buscar produto por nome, categoria ou código..."
+            />
           </div>
+
 
           {items.length > 0 && (
             <div className="rounded-xl border border-border">
@@ -250,9 +235,6 @@ function PurchaseModal({
           <button onClick={finish} className="flex-1 rounded-xl bg-primary py-2 text-sm font-semibold text-primary-foreground">Registrar</button>
         </div>
       </div>
-      {scanning && (
-        <BarcodeScanner onDetected={onScan} onClose={() => setScanning(false)} />
-      )}
     </div>
   );
 }

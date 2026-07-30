@@ -20,8 +20,16 @@ import {
   Wrench,
   Camera,
   Search,
+  Images,
 } from "lucide-react";
 import { toast } from "sonner";
+import { ImageViewer } from "@/components/ImageViewer";
+
+async function dataUrlToFile(dataUrl: string, name: string) {
+  const res = await fetch(dataUrl);
+  const blob = await res.blob();
+  return new File([blob], name, { type: blob.type || "image/jpeg" });
+}
 
 export const Route = createFileRoute("/servicos")({
   head: () =>
@@ -78,6 +86,9 @@ function Servicos() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Service | null>(null);
   const [q, setQ] = useState("");
+  const [viewer, setViewer] = useState<{ photos: string[]; index: number; title: string } | null>(
+    null,
+  );
   const [filterStatus, setFilterStatus] = useState<"todos" | Service["status"]>(
     "todos",
   );
@@ -141,14 +152,47 @@ function Servicos() {
     setServices((prev) => prev.filter((x) => x.id !== id));
   };
 
-  const share = (s: Service) => {
+  const share = async (s: Service) => {
     const text = osText(s, config.name || "STOKMASTER");
     const phone = digits(s.customerPhone);
+
+    // 1) tenta compartilhar OS + fotos juntos (celular / apps compatíveis)
+    if (s.photos.length > 0 && typeof navigator !== "undefined" && navigator.share) {
+      try {
+        const files = await Promise.all(
+          s.photos.map((p, i) => dataUrlToFile(p, `os-${s.id}-foto-${i + 1}.jpg`)),
+        );
+        const canFiles =
+          !navigator.canShare || navigator.canShare({ files });
+        if (canFiles) {
+          await navigator.share({ text, files });
+          return;
+        }
+      } catch (e) {
+        if ((e as Error)?.name === "AbortError") return;
+      }
+    }
+
+    // 2) fallback: baixa as fotos e abre o WhatsApp com o texto da OS
+    if (s.photos.length > 0) {
+      s.photos.forEach((src, i) => {
+        const a = document.createElement("a");
+        a.href = src;
+        a.download = `os-${s.id}-foto-${i + 1}.jpg`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+      });
+      toast.message("Fotos baixadas", {
+        description: "Anexe as fotos na conversa do WhatsApp que vai abrir.",
+      });
+    }
     const url = phone
       ? `https://wa.me/${phone}?text=${encodeURIComponent(text)}`
       : `https://wa.me/?text=${encodeURIComponent(text)}`;
     window.open(url, "_blank");
   };
+
 
   return (
     <AppShell>
@@ -237,12 +281,21 @@ function Servicos() {
                 {s.photos.length > 0 && (
                   <div className="mt-2 flex gap-1 overflow-x-auto">
                     {s.photos.map((src, i) => (
-                      <img
+                      <button
                         key={i}
-                        src={src}
-                        alt=""
-                        className="h-14 w-14 shrink-0 rounded-lg object-cover"
-                      />
+                        type="button"
+                        onClick={() =>
+                          setViewer({ photos: s.photos, index: i, title: s.work })
+                        }
+                        className="shrink-0"
+                        aria-label={`Abrir foto ${i + 1}`}
+                      >
+                        <img
+                          src={src}
+                          alt={`Foto ${i + 1} da OS ${s.work}`}
+                          className="h-14 w-14 rounded-lg object-cover"
+                        />
+                      </button>
                     ))}
                   </div>
                 )}
@@ -251,8 +304,18 @@ function Servicos() {
                     onClick={() => share(s)}
                     className="flex-1 inline-flex items-center justify-center gap-1 rounded-lg bg-[#25D366] px-2 py-1.5 text-xs font-semibold text-white"
                   >
-                    <Share2 size={14} /> WhatsApp
+                    <Share2 size={14} /> WhatsApp + fotos
                   </button>
+                  {s.photos.length > 0 && (
+                    <button
+                      onClick={() =>
+                        setViewer({ photos: s.photos, index: 0, title: s.work })
+                      }
+                      className="inline-flex items-center gap-1 rounded-lg border border-border px-3 text-xs"
+                    >
+                      <Images size={14} /> Fotos
+                    </button>
+                  )}
                   <button
                     onClick={() => {
                       setEditing(s);
@@ -269,6 +332,7 @@ function Servicos() {
                     <Trash2 size={14} />
                   </button>
                 </div>
+
               </div>
             );
           })}
@@ -284,6 +348,15 @@ function Servicos() {
             setEditing(null);
           }}
           onSave={save}
+        />
+      )}
+
+      {viewer && (
+        <ImageViewer
+          images={viewer.photos}
+          index={viewer.index}
+          title={viewer.title}
+          onClose={() => setViewer(null)}
         />
       )}
     </AppShell>
@@ -302,6 +375,7 @@ function ServiceModal({
   onSave: (s: Service) => void;
 }) {
   const [s, setS] = useState<Service>(value);
+  const [viewIdx, setViewIdx] = useState<number | null>(null);
   const set = <K extends keyof Service>(k: K, v: Service[K]) =>
     setS((prev) => ({ ...prev, [k]: v }));
 
@@ -424,11 +498,18 @@ function ServiceModal({
               <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
                 {s.photos.map((src, i) => (
                   <div key={i} className="relative">
-                    <img
-                      src={src}
-                      alt=""
-                      className="aspect-square w-full rounded-lg object-cover"
-                    />
+                    <button
+                      type="button"
+                      onClick={() => setViewIdx(i)}
+                      className="block w-full"
+                      aria-label={`Abrir foto ${i + 1}`}
+                    >
+                      <img
+                        src={src}
+                        alt={`Foto ${i + 1}`}
+                        className="aspect-square w-full rounded-lg object-cover"
+                      />
+                    </button>
                     <button
                       type="button"
                       onClick={() => removePhoto(i)}
@@ -441,6 +522,15 @@ function ServiceModal({
                 ))}
               </div>
             )}
+            {viewIdx !== null && (
+              <ImageViewer
+                images={s.photos}
+                index={viewIdx}
+                title={s.work}
+                onClose={() => setViewIdx(null)}
+              />
+            )}
+
           </div>
 
           <div className="grid grid-cols-2 gap-3">

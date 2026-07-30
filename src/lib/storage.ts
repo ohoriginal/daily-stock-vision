@@ -38,6 +38,7 @@ export type Sale = {
   profit: number;
   payment: "dinheiro" | "pix" | "credito" | "debito" | "outro";
   notes?: string;
+  warrantyDays?: number;
 };
 
 export type PurchaseItem = {
@@ -225,6 +226,10 @@ function normalizeSale(value: unknown): Sale | null {
     profit: num(value.profit, total - num(value.cost)),
     payment,
     notes: typeof value.notes === "string" ? value.notes : undefined,
+    warrantyDays:
+      typeof value.warrantyDays === "number" && Number.isFinite(value.warrantyDays)
+        ? value.warrantyDays
+        : undefined,
   };
 }
 

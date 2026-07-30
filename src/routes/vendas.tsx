@@ -14,9 +14,9 @@ import {
   type SaleItem,
 } from "@/lib/storage";
 import { brl, fmtDateTime, todayISO, uid } from "@/lib/format";
-import { Plus, X, Trash2, Share2, Download, ScanLine, Search } from "lucide-react";
+import { Plus, X, Trash2, Share2, Download, Search } from "lucide-react";
 import { toast } from "sonner";
-import { BarcodeScanner } from "@/components/BarcodeScanner";
+import { ProductPicker } from "@/components/ProductPicker";
 import {
   receiptPdfBlob,
   receiptPngBlob,
@@ -171,11 +171,10 @@ function SaleModal({
   const [customerId, setCustomerId] = useState<string>("");
   const [payment, setPayment] = useState<Sale["payment"]>("dinheiro");
   const [notes, setNotes] = useState("");
-  const [pickProductId, setPickProductId] = useState("");
   const [couponCode, setCouponCode] = useState("");
   const [manualDiscount, setManualDiscount] = useState(0);
   const [couponDiscount, setCouponDiscount] = useState(0);
-  const [scanning, setScanning] = useState(false);
+  const [warrantyDays, setWarrantyDays] = useState(90);
 
   const addProduct = (p: (typeof products)[number]) => {
     setItems((prev) => {
@@ -191,20 +190,15 @@ function SaleModal({
     });
   };
 
-  const addItem = () => {
-    const p = products.find((x) => x.id === pickProductId);
-    if (!p) return toast.error("Escolha um produto");
-    if (items.some((i) => i.productId === p.id)) return toast.error("Já adicionado");
+  const pick = (p: (typeof products)[number]) => {
     addProduct(p);
-    setPickProductId("");
+    toast.success(`+1 ${p.name}`);
   };
 
   const onScan = (code: string) => {
     const p = products.find((x) => (x.barcode || "") === code);
-    setScanning(false);
     if (!p) return toast.error("Produto com esse código não encontrado");
-    addProduct(p);
-    toast.success(`+1 ${p.name}`);
+    pick(p);
   };
 
   const updateQty = (id: string, qty: number) =>
@@ -254,6 +248,7 @@ function SaleModal({
       total,
       cost,
       profit,
+      warrantyDays: warrantyDays > 0 ? warrantyDays : undefined,
       payment,
       notes,
       customerId: c?.id,
@@ -278,28 +273,13 @@ function SaleModal({
             </select>
           </label>
 
-          <div className="grid grid-cols-[minmax(0,1fr)_auto_auto] gap-2">
-            <select value={pickProductId} onChange={(e) => setPickProductId(e.target.value)} className={inputCls}>
-              <option value="">Adicionar produto...</option>
-              {products.map((p) => (
-                <option key={p.id} value={p.id} disabled={p.stock <= 0}>
-                  {p.name} — {brl(p.price)} (est: {p.stock})
-                </option>
-              ))}
-            </select>
-            <button
-              type="button"
-              onClick={() => setScanning(true)}
-              className="inline-flex items-center gap-1 rounded-xl border border-[color:var(--gold)]/60 px-3 text-xs font-semibold"
-              style={{ color: "var(--gold)" }}
-              aria-label="Escanear código de barras"
-            >
-              <ScanLine size={14} />
-            </button>
-            <button onClick={addItem} className="rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground">
-              +
-            </button>
+          <div>
+            <span className="mb-1 block text-xs font-semibold text-muted-foreground">
+              Buscar produto para vender
+            </span>
+            <ProductPicker products={products} onPick={pick} onScan={onScan} mode="venda" />
           </div>
+
 
           {items.length > 0 && (
             <div className="rounded-xl border border-border">
@@ -359,19 +339,34 @@ function SaleModal({
               Aplicar
             </button>
           </div>
-          <label className="block">
-            <span className="mb-1 block text-xs font-semibold text-muted-foreground">
-              Desconto manual (R$)
-            </span>
-            <input
-              type="number"
-              step="0.01"
-              min={0}
-              value={manualDiscount}
-              onChange={(e) => setManualDiscount(Number(e.target.value))}
-              className={inputCls}
-            />
-          </label>
+          <div className="grid grid-cols-2 gap-3">
+            <label className="block">
+              <span className="mb-1 block text-xs font-semibold text-muted-foreground">
+                Desconto manual (R$)
+              </span>
+              <input
+                type="number"
+                step="0.01"
+                min={0}
+                value={manualDiscount}
+                onChange={(e) => setManualDiscount(Number(e.target.value))}
+                className={inputCls}
+              />
+            </label>
+            <label className="block">
+              <span className="mb-1 block text-xs font-semibold text-muted-foreground">
+                Garantia (dias)
+              </span>
+              <input
+                type="number"
+                min={0}
+                value={warrantyDays}
+                onChange={(e) => setWarrantyDays(Number(e.target.value))}
+                className={inputCls}
+              />
+            </label>
+          </div>
+
 
           <div className="rounded-xl bg-accent p-3 text-sm">
             <div className="flex justify-between text-xs text-muted-foreground">
@@ -396,9 +391,6 @@ function SaleModal({
           <button onClick={finish} className="flex-1 rounded-xl bg-primary py-2 text-sm font-semibold text-primary-foreground">Finalizar</button>
         </div>
       </div>
-      {scanning && (
-        <BarcodeScanner onDetected={onScan} onClose={() => setScanning(false)} />
-      )}
     </div>
   );
 }
