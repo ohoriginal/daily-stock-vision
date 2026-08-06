@@ -73,23 +73,46 @@ export function exportDetailedPdf(
     headStyles: { fillColor: [30, 30, 30] },
   });
 
+  // Produtos vendidos (agrupado por produto)
+  const agg = new Map<string, { name: string; qty: number; total: number; profit: number }>();
+  s.forEach((sale) =>
+    sale.items.forEach((it) => {
+      const cur = agg.get(it.name) || { name: it.name, qty: 0, total: 0, profit: 0 };
+      cur.qty += it.qty;
+      cur.total += it.qty * it.price;
+      cur.profit += it.qty * (it.price - it.cost);
+      agg.set(it.name, cur);
+    }),
+  );
+  const aggRows = [...agg.values()].sort((a, b) => b.qty - a.qty);
+
   autoTable(doc, {
     startY: (doc as any).lastAutoTable.finalY + 8,
-    head: [["Data", "Nº", "Cliente", "Itens", "Pagto", "Total"]],
+    head: [["Produtos vendidos", "Qtd", "Faturamento", "Lucro"]],
+    body: aggRows.length
+      ? aggRows.map((r) => [r.name, String(r.qty), brl(r.total), brl(r.profit)])
+      : [["Nenhum produto vendido no período", "-", "-", "-"]],
+    styles: { fontSize: 8 },
+    headStyles: { fillColor: [30, 30, 30] },
+  });
+
+  // Vendas com detalhamento dos itens
+  autoTable(doc, {
+    startY: (doc as any).lastAutoTable.finalY + 8,
+    head: [["Data", "Nº", "Cliente", "Produtos (qtd x nome)", "Pagto", "Total"]],
     body: s.map((x) => [
       fmtDate(x.date),
       x.id.slice(-6).toUpperCase(),
       x.customerName || "-",
-      String(x.items.reduce((a, b) => a + b.qty, 0)),
+      x.items.map((i) => `${i.qty}x ${i.name}`).join("\n") || "-",
       x.payment,
       brl(x.total),
     ]),
-    styles: { fontSize: 8 },
+    styles: { fontSize: 8, cellWidth: "wrap" },
+    columnStyles: { 3: { cellWidth: 70 } },
     headStyles: { fillColor: [30, 30, 30] },
-    didDrawPage: (d) => {
-      if (d.pageNumber === 1) return;
-    },
   });
+
 
   doc.addPage();
   autoTable(doc, {
