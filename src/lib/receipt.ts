@@ -1,7 +1,7 @@
 import { jsPDF } from "jspdf";
 import html2canvas from "html2canvas";
 import type { Sale, BusinessConfig } from "./storage";
-import { brl, fmtDateTime } from "./format";
+import { brlRaw as brl, fmtDateTime } from "./format";
 
 function paymentLabel(p: Sale["payment"]) {
   return (

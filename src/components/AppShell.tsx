@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import {
   Home,
   Package,
@@ -14,9 +14,12 @@ import {
   Wrench,
   Percent,
   Store,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { useTheme } from "@/lib/theme";
 import { useConfig } from "@/lib/storage";
+import { useMask, toggleMask, initMask } from "@/lib/privacy";
 
 type NavItem = {
   to: string;
@@ -40,6 +43,10 @@ const NAV: NavItem[] = [
 
 export function AppShell({ children }: { children: ReactNode }) {
   const { mode, toggle } = useTheme();
+  const masked = useMask();
+  useEffect(() => {
+    initMask();
+  }, []);
   const [config] = useConfig();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
@@ -66,6 +73,16 @@ export function AppShell({ children }: { children: ReactNode }) {
               </div>
             </div>
           </div>
+          <div className="flex shrink-0 items-center gap-2">
+          <button
+            onClick={() => toggleMask()}
+            aria-label={masked ? "Mostrar valores" : "Esconder valores"}
+            title={masked ? "Mostrar valores" : "Esconder valores"}
+            className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-border text-foreground hover:bg-accent"
+            style={masked ? { borderColor: "var(--gold)", color: "var(--gold)" } : undefined}
+          >
+            {masked ? <EyeOff size={18} /> : <Eye size={18} />}
+          </button>
           <button
             onClick={toggle}
             aria-label="Alternar tema"
@@ -73,6 +90,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           >
             {mode === "dark" ? <Sun size={18} /> : <Moon size={18} />}
           </button>
+          </div>
         </div>
       </header>
 
@@ -101,7 +119,9 @@ export function AppShell({ children }: { children: ReactNode }) {
           </nav>
         </aside>
 
-        <main className="min-w-0 pb-28 lg:pb-6">{children}</main>
+        <main key={masked ? "hidden" : "shown"} className="min-w-0 pb-28 lg:pb-6">
+          {children}
+        </main>
       </div>
 
       <nav
