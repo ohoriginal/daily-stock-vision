@@ -2,7 +2,7 @@ import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx";
 import type { Sale, Purchase, BusinessConfig } from "./storage";
-import { brl, fmtDate } from "./format";
+import { brlRaw as brl, fmtDate } from "./format";
 
 export type Period = { from: string; to: string };
 
