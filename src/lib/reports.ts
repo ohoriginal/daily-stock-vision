@@ -117,16 +117,18 @@ export function exportDetailedPdf(
   doc.addPage();
   autoTable(doc, {
     startY: 16,
-    head: [["Compras — Data", "Nº", "Fornecedor", "Itens", "Total"]],
+    head: [["Compras — Data", "Nº", "Fornecedor", "Produtos (qtd x nome)", "Total"]],
     body: c.map((x) => [
       fmtDate(x.date),
       x.id.slice(-6).toUpperCase(),
       x.supplier || "-",
-      String(x.items.reduce((a, b) => a + b.qty, 0)),
+      x.items.map((i) => `${i.qty}x ${i.name}`).join("\n") || "-",
       brl(x.total),
     ]),
-    styles: { fontSize: 8 },
+    styles: { fontSize: 8, cellWidth: "wrap" },
+    columnStyles: { 3: { cellWidth: 75 } },
     headStyles: { fillColor: [30, 30, 30] },
+
   });
 
   download(
