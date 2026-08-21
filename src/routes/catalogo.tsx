@@ -207,6 +207,42 @@ function Catalogo() {
         />
       </div>
 
+      <div className="mb-4 rounded-2xl border border-border bg-card p-3">
+        <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground">
+          <ListFilter size={14} /> Lista por categoria
+        </div>
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          <button
+            onClick={() => setCat("")}
+            className={
+              "rounded-lg border px-2.5 py-1 text-xs " +
+              (cat === "" ? "border-transparent bg-primary text-primary-foreground" : "border-border")
+            }
+          >
+            Todas
+          </button>
+          {categories.map((c) => (
+            <button
+              key={c}
+              onClick={() => setCat(c)}
+              className={
+                "rounded-lg border px-2.5 py-1 text-xs " +
+                (cat === c ? "border-transparent bg-primary text-primary-foreground" : "border-border")
+              }
+            >
+              {c}
+            </button>
+          ))}
+        </div>
+        <button
+          onClick={shareCategoryList}
+          className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#25D366] px-4 py-2 text-sm font-semibold text-white"
+        >
+          <MessageCircle size={16} /> Enviar lista {cat ? `de ${cat}` : "completa"} (só nomes)
+        </button>
+      </div>
+
+
       {visible.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
           {products.length === 0
