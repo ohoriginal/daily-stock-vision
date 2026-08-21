@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
 import {
   Home,
   Package,
@@ -16,10 +16,13 @@ import {
   Store,
   Eye,
   EyeOff,
+  RotateCw,
 } from "lucide-react";
 import { useTheme } from "@/lib/theme";
 import { useConfig } from "@/lib/storage";
 import { useMask, toggleMask, initMask } from "@/lib/privacy";
+import { useRotation, rotateScreen, initRotation } from "@/lib/rotate";
+
 
 type NavItem = {
   to: string;
