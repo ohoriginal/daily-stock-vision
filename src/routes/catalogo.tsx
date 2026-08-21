@@ -24,23 +24,77 @@ function Catalogo() {
   const [products] = useProducts();
   const [config, setConfig] = useConfig();
   const [q, setQ] = useState("");
+  const [cat, setCat] = useState("");
   const [editPhone, setEditPhone] = useState(false);
   const [phoneDraft, setPhoneDraft] = useState(config.phone);
+
+  const categories = useMemo(
+    () =>
+      [...new Set(products.filter((p) => p.active !== false).map((p) => (p.category || "Sem categoria").trim()))]
+        .filter(Boolean)
+        .sort((a, b) => a.localeCompare(b, "pt-BR")),
+    [products],
+  );
 
   const visible = useMemo(
     () =>
       products.filter((p) => {
         if (p.active === false) return false;
+        if (cat && (p.category || "Sem categoria").trim() !== cat) return false;
         if (q && !p.name.toLowerCase().includes(q.toLowerCase())) return false;
         return true;
       }),
-    [products, q],
+    [products, q, cat],
   );
 
   const savePhone = () => {
     setConfig({ ...config, phone: phoneDraft });
     setEditPhone(false);
     toast.success("Telefone atualizado");
+  };
+
+  /** Lista apenas com nomes dos produtos, agrupada por categoria (sem preços). */
+  const categoryListText = () => {
+    const groups = new Map<string, string[]>();
+    visible.forEach((p) => {
+      const key = (p.category || "Sem categoria").trim() || "Sem categoria";
+      const arr = groups.get(key) || [];
+      arr.push(p.name);
+      groups.set(key, arr);
+    });
+    const lines: string[] = [];
+    lines.push(`*${config.name || "STOKMASTER"} — Produtos disponíveis*`);
+    lines.push("");
+    [...groups.keys()]
+      .sort((a, b) => a.localeCompare(b, "pt-BR"))
+      .forEach((key) => {
+        lines.push(`*${key.toUpperCase()}*`);
+        (groups.get(key) || [])
+          .sort((a, b) => a.localeCompare(b, "pt-BR"))
+          .forEach((name) => lines.push(`• ${name}`));
+        lines.push("");
+      });
+    if (config.phone) lines.push(`Pedidos: ${config.phone}`);
+    lines.push("Peça o seu respondendo esta mensagem 📱");
+    return lines.join("\n");
+  };
+
+  const shareCategoryList = async () => {
+    if (visible.length === 0) {
+      toast.error("Nenhum produto para compartilhar");
+      return;
+    }
+    const text = categoryListText();
+    const nav = navigator as Navigator & {
+      share?: (d: { text?: string; title?: string }) => Promise<void>;
+    };
+    try {
+      if (nav.share) {
+        await nav.share({ title: "Lista de produtos", text });
+        return;
+      }
+    } catch {}
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
   };
 
   const catalogText = () => {
@@ -57,6 +111,7 @@ function Catalogo() {
     lines.push("Faça seu pedido respondendo esta mensagem 📱");
     return lines.join("\n");
   };
+
 
   const shareCatalog = async () => {
     const text = catalogText();
