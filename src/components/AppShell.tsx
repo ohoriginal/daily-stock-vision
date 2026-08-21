@@ -120,12 +120,22 @@ export function AppShell({ children }: { children: ReactNode }) {
             {masked ? <EyeOff size={18} /> : <Eye size={18} />}
           </button>
           <button
+            onClick={() => rotateScreen()}
+            aria-label="Girar a tela"
+            title={`Girar a tela (${rotation}°)`}
+            className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-border text-foreground hover:bg-accent"
+            style={rotation !== 0 ? { borderColor: "var(--gold)", color: "var(--gold)" } : undefined}
+          >
+            <RotateCw size={18} />
+          </button>
+          <button
             onClick={toggle}
             aria-label="Alternar tema"
             className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-border text-foreground hover:bg-accent"
           >
             {mode === "dark" ? <Sun size={18} /> : <Moon size={18} />}
           </button>
+
           </div>
         </div>
       </header>
