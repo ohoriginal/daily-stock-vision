@@ -4,7 +4,7 @@ import { AppShell, PageHeader } from "@/components/AppShell";
 import { pageHead } from "@/lib/seo";
 import { useProducts, useConfig } from "@/lib/storage";
 import { brl } from "@/lib/format";
-import { Search, Share2, MessageCircle, Phone, Pencil, Check } from "lucide-react";
+import { Search, Share2, MessageCircle, Phone, Pencil, Check, ListFilter } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/catalogo")({
@@ -24,23 +24,77 @@ function Catalogo() {
   const [products] = useProducts();
   const [config, setConfig] = useConfig();
   const [q, setQ] = useState("");
+  const [cat, setCat] = useState("");
   const [editPhone, setEditPhone] = useState(false);
   const [phoneDraft, setPhoneDraft] = useState(config.phone);
+
+  const categories = useMemo(
+    () =>
+      [...new Set(products.filter((p) => p.active !== false).map((p) => (p.category || "Sem categoria").trim()))]
+        .filter(Boolean)
+        .sort((a, b) => a.localeCompare(b, "pt-BR")),
+    [products],
+  );
 
   const visible = useMemo(
     () =>
       products.filter((p) => {
         if (p.active === false) return false;
+        if (cat && (p.category || "Sem categoria").trim() !== cat) return false;
         if (q && !p.name.toLowerCase().includes(q.toLowerCase())) return false;
         return true;
       }),
-    [products, q],
+    [products, q, cat],
   );
 
   const savePhone = () => {
     setConfig({ ...config, phone: phoneDraft });
     setEditPhone(false);
     toast.success("Telefone atualizado");
+  };
+
+  /** Lista apenas com nomes dos produtos, agrupada por categoria (sem preços). */
+  const categoryListText = () => {
+    const groups = new Map<string, string[]>();
+    visible.forEach((p) => {
+      const key = (p.category || "Sem categoria").trim() || "Sem categoria";
+      const arr = groups.get(key) || [];
+      arr.push(p.name);
+      groups.set(key, arr);
+    });
+    const lines: string[] = [];
+    lines.push(`*${config.name || "STOKMASTER"} — Produtos disponíveis*`);
+    lines.push("");
+    [...groups.keys()]
+      .sort((a, b) => a.localeCompare(b, "pt-BR"))
+      .forEach((key) => {
+        lines.push(`*${key.toUpperCase()}*`);
+        (groups.get(key) || [])
+          .sort((a, b) => a.localeCompare(b, "pt-BR"))
+          .forEach((name) => lines.push(`• ${name}`));
+        lines.push("");
+      });
+    if (config.phone) lines.push(`Pedidos: ${config.phone}`);
+    lines.push("Peça o seu respondendo esta mensagem 📱");
+    return lines.join("\n");
+  };
+
+  const shareCategoryList = async () => {
+    if (visible.length === 0) {
+      toast.error("Nenhum produto para compartilhar");
+      return;
+    }
+    const text = categoryListText();
+    const nav = navigator as Navigator & {
+      share?: (d: { text?: string; title?: string }) => Promise<void>;
+    };
+    try {
+      if (nav.share) {
+        await nav.share({ title: "Lista de produtos", text });
+        return;
+      }
+    } catch {}
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
   };
 
   const catalogText = () => {
@@ -57,6 +111,7 @@ function Catalogo() {
     lines.push("Faça seu pedido respondendo esta mensagem 📱");
     return lines.join("\n");
   };
+
 
   const shareCatalog = async () => {
     const text = catalogText();
@@ -151,6 +206,42 @@ function Catalogo() {
           className="w-full rounded-xl border border-border bg-card py-2 pl-9 pr-3 text-sm outline-none focus:border-[color:var(--gold)]"
         />
       </div>
+
+      <div className="mb-4 rounded-2xl border border-border bg-card p-3">
+        <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground">
+          <ListFilter size={14} /> Lista por categoria
+        </div>
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          <button
+            onClick={() => setCat("")}
+            className={
+              "rounded-lg border px-2.5 py-1 text-xs " +
+              (cat === "" ? "border-transparent bg-primary text-primary-foreground" : "border-border")
+            }
+          >
+            Todas
+          </button>
+          {categories.map((c) => (
+            <button
+              key={c}
+              onClick={() => setCat(c)}
+              className={
+                "rounded-lg border px-2.5 py-1 text-xs " +
+                (cat === c ? "border-transparent bg-primary text-primary-foreground" : "border-border")
+              }
+            >
+              {c}
+            </button>
+          ))}
+        </div>
+        <button
+          onClick={shareCategoryList}
+          className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#25D366] px-4 py-2 text-sm font-semibold text-white"
+        >
+          <MessageCircle size={16} /> Enviar lista {cat ? `de ${cat}` : "completa"} (só nomes)
+        </button>
+      </div>
+
 
       {visible.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">

@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
 import {
   Home,
   Package,
@@ -16,10 +16,13 @@ import {
   Store,
   Eye,
   EyeOff,
+  RotateCw,
 } from "lucide-react";
 import { useTheme } from "@/lib/theme";
 import { useConfig } from "@/lib/storage";
 import { useMask, toggleMask, initMask } from "@/lib/privacy";
+import { useRotation, rotateScreen, initRotation } from "@/lib/rotate";
+
 
 type NavItem = {
   to: string;
@@ -44,14 +47,47 @@ const NAV: NavItem[] = [
 export function AppShell({ children }: { children: ReactNode }) {
   const { mode, toggle } = useTheme();
   const masked = useMask();
+  const rotation = useRotation();
+  const [vp, setVp] = useState({ w: 0, h: 0 });
   useEffect(() => {
     initMask();
+    initRotation();
+    const onResize = () =>
+      setVp({ w: window.innerWidth, h: window.innerHeight });
+    onResize();
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
   }, []);
   const [config] = useConfig();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
+  let wrapperStyle: CSSProperties | undefined;
+  if (rotation !== 0 && vp.w > 0) {
+    const sideways = rotation === 90 || rotation === 270;
+    wrapperStyle = {
+      position: "fixed",
+      top: 0,
+      left: 0,
+      width: sideways ? vp.h : vp.w,
+      height: sideways ? vp.w : vp.h,
+      overflowY: "auto",
+      overflowX: "hidden",
+      transformOrigin: rotation === 180 ? "center center" : "top left",
+      transform:
+        rotation === 90
+          ? `rotate(90deg) translate(0px, -${vp.w}px)`
+          : rotation === 270
+            ? `rotate(270deg) translate(-${vp.h}px, 0px)`
+            : "rotate(180deg)",
+    };
+  }
+
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div
+      className="min-h-screen bg-background text-foreground"
+      style={wrapperStyle}
+    >
+
       <header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
           <div className="flex min-w-0 items-center gap-3">
@@ -84,12 +120,22 @@ export function AppShell({ children }: { children: ReactNode }) {
             {masked ? <EyeOff size={18} /> : <Eye size={18} />}
           </button>
           <button
+            onClick={() => rotateScreen()}
+            aria-label="Girar a tela"
+            title={`Girar a tela (${rotation}°)`}
+            className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-border text-foreground hover:bg-accent"
+            style={rotation !== 0 ? { borderColor: "var(--gold)", color: "var(--gold)" } : undefined}
+          >
+            <RotateCw size={18} />
+          </button>
+          <button
             onClick={toggle}
             aria-label="Alternar tema"
             className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-border text-foreground hover:bg-accent"
           >
             {mode === "dark" ? <Sun size={18} /> : <Moon size={18} />}
           </button>
+
           </div>
         </div>
       </header>
