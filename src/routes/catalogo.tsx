@@ -4,7 +4,7 @@ import { AppShell, PageHeader } from "@/components/AppShell";
 import { pageHead } from "@/lib/seo";
 import { useProducts, useConfig } from "@/lib/storage";
 import { brl } from "@/lib/format";
-import { Search, Share2, MessageCircle, Phone, Pencil, Check } from "lucide-react";
+import { Search, Share2, MessageCircle, Phone, Pencil, Check, ListFilter } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/catalogo")({
