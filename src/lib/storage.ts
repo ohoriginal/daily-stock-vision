@@ -554,3 +554,28 @@ export async function fileToResizedDataURL(
   ctx.drawImage(img, 0, 0, w, h);
   return canvas.toDataURL("image/jpeg", quality);
 }
+
+// ---- Cloud sync bridge ----
+/** Current local value of a store (already sanitized). */
+export function getStoreValue(name: StoreKey): unknown {
+  const fallback: unknown = name === "config" ? defaultConfig : [];
+  return readStore(name, fallback);
+}
+
+/** Apply a value that came from the cloud without triggering a push back. */
+export function setStoreFromRemote(name: StoreKey, value: unknown) {
+  const fallback: unknown = name === "config" ? defaultConfig : [];
+  write(KEYS[name], sanitizeStoreValue(name, value, fallback), true);
+}
+
+export function clearLocalStores() {
+  if (typeof window === "undefined") return;
+  for (const name of SYNCED_STORES) {
+    try {
+      window.localStorage.removeItem(KEYS[name]);
+    } catch {
+      // ignore
+    }
+    window.dispatchEvent(new CustomEvent("mm-store", { detail: { key: KEYS[name], remote: true } }));
+  }
+}
