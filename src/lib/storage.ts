@@ -101,7 +101,7 @@ export type BusinessConfig = {
 
 export type ThemeMode = "dark" | "light";
 
-const KEYS = {
+export const KEYS = {
   products: "mm.products",
   sales: "mm.sales",
   purchases: "mm.purchases",
@@ -112,7 +112,18 @@ const KEYS = {
   theme: "mm.theme",
 } as const;
 
-type StoreKey = keyof typeof KEYS;
+export type StoreKey = keyof typeof KEYS;
+
+/** Stores that are synced to the cloud (theme stays local per device). */
+export const SYNCED_STORES: StoreKey[] = [
+  "products",
+  "sales",
+  "purchases",
+  "customers",
+  "services",
+  "promotions",
+  "config",
+];
 
 function read<T>(key: string, fallback: T): T {
   if (typeof window === "undefined") return fallback;
@@ -124,14 +135,14 @@ function read<T>(key: string, fallback: T): T {
   }
 }
 
-function write<T>(key: string, value: T) {
+function write<T>(key: string, value: T, remote = false) {
   if (typeof window === "undefined") return;
   try {
     window.localStorage.setItem(key, JSON.stringify(value));
-    window.dispatchEvent(new CustomEvent("mm-store", { detail: { key } }));
   } catch {
-    window.dispatchEvent(new CustomEvent("mm-store", { detail: { key } }));
+    // ignore quota errors, still notify listeners
   }
+  window.dispatchEvent(new CustomEvent("mm-store", { detail: { key, remote } }));
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
