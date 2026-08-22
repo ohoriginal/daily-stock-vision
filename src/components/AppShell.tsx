@@ -150,7 +150,25 @@ function AppShellInner({ children }: { children: ReactNode }) {
           >
             {mode === "dark" ? <Sun size={18} /> : <Moon size={18} />}
           </button>
-
+          <div
+            className="hidden h-10 items-center gap-2 rounded-xl border border-border px-3 text-[11px] text-muted-foreground sm:flex"
+            title={email ? `Conta: ${email}` : "Sincronizado"}
+          >
+            {syncing ? (
+              <RefreshCw size={14} className="animate-spin" />
+            ) : (
+              <CloudCheck size={14} style={{ color: "var(--stock-full)" }} />
+            )}
+            <span className="max-w-[140px] truncate">{email ?? "Sincronizado"}</span>
+          </div>
+          <button
+            onClick={() => void signOut()}
+            aria-label="Sair da conta"
+            title="Sair da conta"
+            className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-border text-foreground hover:bg-accent"
+          >
+            <LogOut size={18} />
+          </button>
           </div>
         </div>
       </header>
