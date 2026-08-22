@@ -51,6 +51,15 @@ const NAV: NavItem[] = [
 ];
 
 export function AppShell({ children }: { children: ReactNode }) {
+  return (
+    <AuthGate>
+      <AppShellInner>{children}</AppShellInner>
+    </AuthGate>
+  );
+}
+
+function AppShellInner({ children }: { children: ReactNode }) {
+  const { email, syncing, signOut } = useCloud();
   const { mode, toggle } = useTheme();
   const masked = useMask();
   const rotation = useRotation();
