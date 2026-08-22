@@ -17,11 +17,17 @@ import {
   Eye,
   EyeOff,
   RotateCw,
+  CloudCheck,
+  RefreshCw,
+  LogOut,
 } from "lucide-react";
 import { useTheme } from "@/lib/theme";
 import { useConfig } from "@/lib/storage";
 import { useMask, toggleMask, initMask } from "@/lib/privacy";
 import { useRotation, rotateScreen, initRotation } from "@/lib/rotate";
+import { useCloud } from "@/lib/cloud";
+import { AuthGate } from "@/components/AuthGate";
+
 
 
 type NavItem = {
