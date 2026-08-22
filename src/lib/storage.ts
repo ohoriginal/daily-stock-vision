@@ -101,7 +101,7 @@ export type BusinessConfig = {
 
 export type ThemeMode = "dark" | "light";
 
-const KEYS = {
+export const KEYS = {
   products: "mm.products",
   sales: "mm.sales",
   purchases: "mm.purchases",
@@ -112,7 +112,18 @@ const KEYS = {
   theme: "mm.theme",
 } as const;
 
-type StoreKey = keyof typeof KEYS;
+export type StoreKey = keyof typeof KEYS;
+
+/** Stores that are synced to the cloud (theme stays local per device). */
+export const SYNCED_STORES: StoreKey[] = [
+  "products",
+  "sales",
+  "purchases",
+  "customers",
+  "services",
+  "promotions",
+  "config",
+];
 
 function read<T>(key: string, fallback: T): T {
   if (typeof window === "undefined") return fallback;
@@ -124,14 +135,14 @@ function read<T>(key: string, fallback: T): T {
   }
 }
 
-function write<T>(key: string, value: T) {
+function write<T>(key: string, value: T, remote = false) {
   if (typeof window === "undefined") return;
   try {
     window.localStorage.setItem(key, JSON.stringify(value));
-    window.dispatchEvent(new CustomEvent("mm-store", { detail: { key } }));
   } catch {
-    window.dispatchEvent(new CustomEvent("mm-store", { detail: { key } }));
+    // ignore quota errors, still notify listeners
   }
+  window.dispatchEvent(new CustomEvent("mm-store", { detail: { key, remote } }));
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -542,4 +553,29 @@ export async function fileToResizedDataURL(
   ctx.fillRect(0, 0, w, h);
   ctx.drawImage(img, 0, 0, w, h);
   return canvas.toDataURL("image/jpeg", quality);
+}
+
+// ---- Cloud sync bridge ----
+/** Current local value of a store (already sanitized). */
+export function getStoreValue(name: StoreKey): unknown {
+  const fallback: unknown = name === "config" ? defaultConfig : [];
+  return readStore(name, fallback);
+}
+
+/** Apply a value that came from the cloud without triggering a push back. */
+export function setStoreFromRemote(name: StoreKey, value: unknown) {
+  const fallback: unknown = name === "config" ? defaultConfig : [];
+  write(KEYS[name], sanitizeStoreValue(name, value, fallback), true);
+}
+
+export function clearLocalStores() {
+  if (typeof window === "undefined") return;
+  for (const name of SYNCED_STORES) {
+    try {
+      window.localStorage.removeItem(KEYS[name]);
+    } catch {
+      // ignore
+    }
+    window.dispatchEvent(new CustomEvent("mm-store", { detail: { key: KEYS[name], remote: true } }));
+  }
 }
