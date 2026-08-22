@@ -13,6 +13,7 @@ import appCss from "../styles.css?url";
 import { registerPWA } from "../lib/pwa-register";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Toaster } from "@/components/ui/sonner";
+import { CloudProvider } from "@/lib/cloud";
 
 function NotFoundComponent() {
   return (
@@ -134,7 +135,9 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <Outlet />
+      <CloudProvider>
+        <Outlet />
+      </CloudProvider>
       <Toaster richColors position="top-center" />
     </QueryClientProvider>
   );
