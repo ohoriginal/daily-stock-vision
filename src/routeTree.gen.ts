@@ -14,6 +14,7 @@ import { Route as ServicosRouteImport } from './routes/servicos'
 import { Route as RelatoriosRouteImport } from './routes/relatorios'
 import { Route as PromocoesRouteImport } from './routes/promocoes'
 import { Route as ProdutosRouteImport } from './routes/produtos'
+import { Route as PedidosRouteImport } from './routes/pedidos'
 import { Route as MovimentacaoRouteImport } from './routes/movimentacao'
 import { Route as ConfigRouteImport } from './routes/config'
 import { Route as ComprasRouteImport } from './routes/compras'
@@ -44,6 +45,11 @@ const PromocoesRoute = PromocoesRouteImport.update({
 const ProdutosRoute = ProdutosRouteImport.update({
   id: '/produtos',
   path: '/produtos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PedidosRoute = PedidosRouteImport.update({
+  id: '/pedidos',
+  path: '/pedidos',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MovimentacaoRoute = MovimentacaoRouteImport.update({
@@ -84,6 +90,7 @@ export interface FileRoutesByFullPath {
   '/compras': typeof ComprasRoute
   '/config': typeof ConfigRoute
   '/movimentacao': typeof MovimentacaoRoute
+  '/pedidos': typeof PedidosRoute
   '/produtos': typeof ProdutosRoute
   '/promocoes': typeof PromocoesRoute
   '/relatorios': typeof RelatoriosRoute
@@ -97,6 +104,7 @@ export interface FileRoutesByTo {
   '/compras': typeof ComprasRoute
   '/config': typeof ConfigRoute
   '/movimentacao': typeof MovimentacaoRoute
+  '/pedidos': typeof PedidosRoute
   '/produtos': typeof ProdutosRoute
   '/promocoes': typeof PromocoesRoute
   '/relatorios': typeof RelatoriosRoute
@@ -111,6 +119,7 @@ export interface FileRoutesById {
   '/compras': typeof ComprasRoute
   '/config': typeof ConfigRoute
   '/movimentacao': typeof MovimentacaoRoute
+  '/pedidos': typeof PedidosRoute
   '/produtos': typeof ProdutosRoute
   '/promocoes': typeof PromocoesRoute
   '/relatorios': typeof RelatoriosRoute
@@ -126,6 +135,7 @@ export interface FileRouteTypes {
     | '/compras'
     | '/config'
     | '/movimentacao'
+    | '/pedidos'
     | '/produtos'
     | '/promocoes'
     | '/relatorios'
@@ -139,6 +149,7 @@ export interface FileRouteTypes {
     | '/compras'
     | '/config'
     | '/movimentacao'
+    | '/pedidos'
     | '/produtos'
     | '/promocoes'
     | '/relatorios'
@@ -152,6 +163,7 @@ export interface FileRouteTypes {
     | '/compras'
     | '/config'
     | '/movimentacao'
+    | '/pedidos'
     | '/produtos'
     | '/promocoes'
     | '/relatorios'
@@ -166,6 +178,7 @@ export interface RootRouteChildren {
   ComprasRoute: typeof ComprasRoute
   ConfigRoute: typeof ConfigRoute
   MovimentacaoRoute: typeof MovimentacaoRoute
+  PedidosRoute: typeof PedidosRoute
   ProdutosRoute: typeof ProdutosRoute
   PromocoesRoute: typeof PromocoesRoute
   RelatoriosRoute: typeof RelatoriosRoute
@@ -208,6 +221,13 @@ declare module '@tanstack/react-router' {
       path: '/produtos'
       fullPath: '/produtos'
       preLoaderRoute: typeof ProdutosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pedidos': {
+      id: '/pedidos'
+      path: '/pedidos'
+      fullPath: '/pedidos'
+      preLoaderRoute: typeof PedidosRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/movimentacao': {
@@ -262,6 +282,7 @@ const rootRouteChildren: RootRouteChildren = {
   ComprasRoute: ComprasRoute,
   ConfigRoute: ConfigRoute,
   MovimentacaoRoute: MovimentacaoRoute,
+  PedidosRoute: PedidosRoute,
   ProdutosRoute: ProdutosRoute,
   PromocoesRoute: PromocoesRoute,
   RelatoriosRoute: RelatoriosRoute,

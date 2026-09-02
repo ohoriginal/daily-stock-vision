@@ -5,6 +5,8 @@ import { pageHead } from "@/lib/seo";
 import {
   useProducts,
   useSales,
+  useRestock,
+  mergeRestock,
   useCustomers,
   useConfig,
   usePromotions,
@@ -36,6 +38,7 @@ export const Route = createFileRoute("/vendas")({
 function Vendas() {
   const [sales, setSales] = useSales();
   const [products, setProducts] = useProducts();
+  const [, setRestock] = useRestock();
   const [customers] = useCustomers();
   const [promos] = usePromotions();
   const [config] = useConfig();
@@ -63,7 +66,8 @@ function Vendas() {
       }),
     );
     setSales((prev) => [draft, ...prev]);
-    toast.success("Venda registrada");
+    setRestock((prev) => mergeRestock(prev, draft.items, products));
+    toast.success("Venda registrada · itens adicionados à lista de pedidos");
     setOpen(false);
     setReceiptFor(draft);
   };

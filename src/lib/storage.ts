@@ -91,6 +91,16 @@ export type Promotion = {
   createdAt: string;
 };
 
+/** Item da lista de pedidos (reposição), alimentada automaticamente pelas vendas. */
+export type RestockItem = {
+  id: string;
+  productId: string;
+  name: string;
+  category: string;
+  qty: number;
+  updatedAt: string;
+};
+
 export type BusinessConfig = {
   name: string;
   cnpj: string;
@@ -108,6 +118,7 @@ export const KEYS = {
   customers: "mm.customers",
   services: "mm.services",
   promotions: "mm.promotions",
+  restock: "mm.restock",
   config: "mm.config",
   theme: "mm.theme",
 } as const;
@@ -122,6 +133,7 @@ export const SYNCED_STORES: StoreKey[] = [
   "customers",
   "services",
   "promotions",
+  "restock",
   "config",
 ];
 
@@ -307,6 +319,20 @@ function normalizePromotion(value: unknown): Promotion | null {
   };
 }
 
+function normalizeRestockItem(value: unknown): RestockItem | null {
+  if (!isRecord(value)) return null;
+  const name = str(value.name).trim();
+  if (!name) return null;
+  return {
+    id: str(value.id, uidFallback()),
+    productId: str(value.productId),
+    name,
+    category: str(value.category),
+    qty: Math.max(0, num(value.qty, 1)),
+    updatedAt: str(value.updatedAt, new Date().toISOString()),
+  };
+}
+
 function uidFallback() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 }
@@ -325,6 +351,8 @@ function sanitizeStoreValue(name: StoreKey, value: unknown, fallback: unknown): 
       return list(value).map(normalizeService).filter((item) => item !== null);
     case "promotions":
       return list(value).map(normalizePromotion).filter((item) => item !== null);
+    case "restock":
+      return list(value).map(normalizeRestockItem).filter((item) => item !== null);
     case "config":
       return isRecord(value)
         ? {
@@ -398,6 +426,7 @@ export const useSales = () => useStore<Sale[]>("sales", []);
 export const usePurchases = () => useStore<Purchase[]>("purchases", []);
 export const useCustomers = () => useStore<Customer[]>("customers", []);
 export const usePromotions = () => useStore<Promotion[]>("promotions", []);
+export const useRestock = () => useStore<RestockItem[]>("restock", []);
 
 // Services: auto-prune anything older than 90 days on hydration
 export function useServices() {
@@ -487,6 +516,7 @@ export function exportBackup() {
     customers: read(KEYS.customers, []),
     services: read(KEYS.services, []),
     promotions: read(KEYS.promotions, []),
+    restock: read(KEYS.restock, []),
     config: read(KEYS.config, defaultConfig),
   };
   const blob = new Blob([JSON.stringify(payload, null, 2)], {
@@ -512,6 +542,7 @@ export function importBackup(file: File): Promise<void> {
         if (data.customers) write(KEYS.customers, sanitizeStoreValue("customers", data.customers, []));
         if (data.services) write(KEYS.services, sanitizeStoreValue("services", data.services, []));
         if (data.promotions) write(KEYS.promotions, sanitizeStoreValue("promotions", data.promotions, []));
+        if (data.restock) write(KEYS.restock, sanitizeStoreValue("restock", data.restock, []));
         if (data.config) write(KEYS.config, sanitizeStoreValue("config", data.config, defaultConfig));
         resolve();
       } catch (e) {
@@ -578,4 +609,63 @@ export function clearLocalStores() {
     }
     window.dispatchEvent(new CustomEvent("mm-store", { detail: { key: KEYS[name], remote: true } }));
   }
+}
+
+/** Mescla itens vendidos na lista de pedidos, somando quantidades por produto. */
+export function mergeRestock(
+  current: RestockItem[],
+  sold: { productId: string; name: string; qty: number }[],
+  products: Product[],
+): RestockItem[] {
+  const next = [...current];
+  const now = new Date().toISOString();
+  for (const item of sold) {
+    if (!item.name || item.qty <= 0) continue;
+    const product = products.find((p) => p.id === item.productId);
+    const idx = next.findIndex((r) =>
+      item.productId ? r.productId === item.productId : r.name === item.name,
+    );
+    if (idx >= 0) {
+      next[idx] = { ...next[idx], qty: next[idx].qty + item.qty, updatedAt: now };
+    } else {
+      next.push({
+        id: uidFallback(),
+        productId: item.productId,
+        name: item.name,
+        category: (product?.category || "").trim() || "Sem categoria",
+        qty: item.qty,
+        updatedAt: now,
+      });
+    }
+  }
+  return next;
+}
+
+/** Agrupa a lista de pedidos por categoria (ordenada). */
+export function groupRestockByCategory(items: RestockItem[]) {
+  const map = new Map<string, RestockItem[]>();
+  for (const item of items) {
+    const cat = (item.category || "").trim() || "Sem categoria";
+    const arr = map.get(cat) || [];
+    arr.push(item);
+    map.set(cat, arr);
+  }
+  return [...map.entries()]
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .map(([category, list]) => ({
+      category,
+      items: [...list].sort((a, b) => a.name.localeCompare(b.name)),
+    }));
+}
+
+/** Texto simples (sem preços) da lista de pedidos, separado por categoria. */
+export function restockListText(items: RestockItem[], storeName = "STOKMASTER") {
+  const groups = groupRestockByCategory(items);
+  const lines = [`*${storeName} — Lista de pedidos*`, ""];
+  for (const g of groups) {
+    lines.push(`*${g.category.toUpperCase()}*`);
+    for (const item of g.items) lines.push(`• ${item.name} — ${item.qty} un`);
+    lines.push("");
+  }
+  return lines.join("\n").trim();
 }
