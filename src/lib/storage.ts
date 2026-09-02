@@ -118,6 +118,7 @@ export const KEYS = {
   customers: "mm.customers",
   services: "mm.services",
   promotions: "mm.promotions",
+  restock: "mm.restock",
   config: "mm.config",
   theme: "mm.theme",
 } as const;
@@ -132,6 +133,7 @@ export const SYNCED_STORES: StoreKey[] = [
   "customers",
   "services",
   "promotions",
+  "restock",
   "config",
 ];
 
@@ -317,6 +319,20 @@ function normalizePromotion(value: unknown): Promotion | null {
   };
 }
 
+function normalizeRestockItem(value: unknown): RestockItem | null {
+  if (!isRecord(value)) return null;
+  const name = str(value.name).trim();
+  if (!name) return null;
+  return {
+    id: str(value.id, uidFallback()),
+    productId: str(value.productId),
+    name,
+    category: str(value.category),
+    qty: Math.max(0, num(value.qty, 1)),
+    updatedAt: str(value.updatedAt, new Date().toISOString()),
+  };
+}
+
 function uidFallback() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 }
@@ -335,6 +351,8 @@ function sanitizeStoreValue(name: StoreKey, value: unknown, fallback: unknown): 
       return list(value).map(normalizeService).filter((item) => item !== null);
     case "promotions":
       return list(value).map(normalizePromotion).filter((item) => item !== null);
+    case "restock":
+      return list(value).map(normalizeRestockItem).filter((item) => item !== null);
     case "config":
       return isRecord(value)
         ? {
@@ -408,6 +426,7 @@ export const useSales = () => useStore<Sale[]>("sales", []);
 export const usePurchases = () => useStore<Purchase[]>("purchases", []);
 export const useCustomers = () => useStore<Customer[]>("customers", []);
 export const usePromotions = () => useStore<Promotion[]>("promotions", []);
+export const useRestock = () => useStore<RestockItem[]>("restock", []);
 
 // Services: auto-prune anything older than 90 days on hydration
 export function useServices() {
@@ -497,6 +516,7 @@ export function exportBackup() {
     customers: read(KEYS.customers, []),
     services: read(KEYS.services, []),
     promotions: read(KEYS.promotions, []),
+    restock: read(KEYS.restock, []),
     config: read(KEYS.config, defaultConfig),
   };
   const blob = new Blob([JSON.stringify(payload, null, 2)], {
@@ -522,6 +542,7 @@ export function importBackup(file: File): Promise<void> {
         if (data.customers) write(KEYS.customers, sanitizeStoreValue("customers", data.customers, []));
         if (data.services) write(KEYS.services, sanitizeStoreValue("services", data.services, []));
         if (data.promotions) write(KEYS.promotions, sanitizeStoreValue("promotions", data.promotions, []));
+        if (data.restock) write(KEYS.restock, sanitizeStoreValue("restock", data.restock, []));
         if (data.config) write(KEYS.config, sanitizeStoreValue("config", data.config, defaultConfig));
         resolve();
       } catch (e) {
