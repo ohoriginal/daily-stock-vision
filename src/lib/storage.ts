@@ -91,6 +91,16 @@ export type Promotion = {
   createdAt: string;
 };
 
+/** Item da lista de pedidos (reposição), alimentada automaticamente pelas vendas. */
+export type RestockItem = {
+  id: string;
+  productId: string;
+  name: string;
+  category: string;
+  qty: number;
+  updatedAt: string;
+};
+
 export type BusinessConfig = {
   name: string;
   cnpj: string;
