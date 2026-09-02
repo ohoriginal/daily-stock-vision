@@ -610,3 +610,62 @@ export function clearLocalStores() {
     window.dispatchEvent(new CustomEvent("mm-store", { detail: { key: KEYS[name], remote: true } }));
   }
 }
+
+/** Mescla itens vendidos na lista de pedidos, somando quantidades por produto. */
+export function mergeRestock(
+  current: RestockItem[],
+  sold: { productId: string; name: string; qty: number }[],
+  products: Product[],
+): RestockItem[] {
+  const next = [...current];
+  const now = new Date().toISOString();
+  for (const item of sold) {
+    if (!item.name || item.qty <= 0) continue;
+    const product = products.find((p) => p.id === item.productId);
+    const idx = next.findIndex((r) =>
+      item.productId ? r.productId === item.productId : r.name === item.name,
+    );
+    if (idx >= 0) {
+      next[idx] = { ...next[idx], qty: next[idx].qty + item.qty, updatedAt: now };
+    } else {
+      next.push({
+        id: uidFallback(),
+        productId: item.productId,
+        name: item.name,
+        category: (product?.category || "").trim() || "Sem categoria",
+        qty: item.qty,
+        updatedAt: now,
+      });
+    }
+  }
+  return next;
+}
+
+/** Agrupa a lista de pedidos por categoria (ordenada). */
+export function groupRestockByCategory(items: RestockItem[]) {
+  const map = new Map<string, RestockItem[]>();
+  for (const item of items) {
+    const cat = (item.category || "").trim() || "Sem categoria";
+    const arr = map.get(cat) || [];
+    arr.push(item);
+    map.set(cat, arr);
+  }
+  return [...map.entries()]
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .map(([category, list]) => ({
+      category,
+      items: [...list].sort((a, b) => a.name.localeCompare(b.name)),
+    }));
+}
+
+/** Texto simples (sem preços) da lista de pedidos, separado por categoria. */
+export function restockListText(items: RestockItem[], storeName = "STOKMASTER") {
+  const groups = groupRestockByCategory(items);
+  const lines = [`*${storeName} — Lista de pedidos*`, ""];
+  for (const g of groups) {
+    lines.push(`*${g.category.toUpperCase()}*`);
+    for (const item of g.items) lines.push(`• ${item.name} — ${item.qty} un`);
+    lines.push("");
+  }
+  return lines.join("\n").trim();
+}
